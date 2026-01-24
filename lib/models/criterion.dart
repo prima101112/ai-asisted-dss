@@ -9,7 +9,7 @@ enum CriterionType {
   cost,
 }
 
-@JsonSerializable()
+@JsonSerializable(explicitToJson: true)
 class Criterion {
   final String id;
   final String name;
@@ -23,6 +23,7 @@ class Criterion {
     required this.type,
   });
 
-  factory Criterion.fromJson(Map<String, dynamic> json) => _$CriterionFromJson(json);
+  factory Criterion.fromJson(Map<String, dynamic> json) =>
+      _$CriterionFromJson(json);
   Map<String, dynamic> toJson() => _$CriterionToJson(this);
 }

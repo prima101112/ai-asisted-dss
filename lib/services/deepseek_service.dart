@@ -33,16 +33,9 @@ You MUST follow this exact sequence and ask only ONE thing at a time:
 - If the user provides multiple pieces of info, acknowledge and ask for the next missing piece.
 ''';
 
-  Future<String> getChatResponse(List<Map<String, String>> messages) async {
+  Future<String> _makeRawRequest(List<Map<String, String>> messages) async {
     try {
-      debugPrint("--- AI Request to $_baseUrl using deepseek-chat ---");
-
-      // Prepend system prompt if not present
-      final List<Map<String, String>> fullMessages = [
-        {'role': 'system', 'content': chatSystemPrompt},
-        ...messages,
-      ];
-
+      debugPrint("--- AI Request to $_baseUrl ---");
       final response = await _dio.post(
         '$_baseUrl/chat/completions',
         options: Options(
@@ -53,22 +46,26 @@ You MUST follow this exact sequence and ask only ONE thing at a time:
         ),
         data: {
           'model': 'deepseek-chat',
-          'messages': fullMessages,
-          'temperature': 0.7,
+          'messages': messages,
+          'temperature': 0.3, // Lower temperature for more consistent data
         },
       );
-
-      debugPrint("--- AI Response Success ---");
       return response.data['choices'][0]['message']['content'];
     } on DioException catch (e) {
-      debugPrint('Dio error type: ${e.type}');
-      debugPrint('Dio error response: ${e.response?.data}');
-      debugPrint('Dio error message: ${e.message}');
-      throw Exception('DeepSeek API Error: ${e.message}');
+      debugPrint('Dio error: ${e.response?.data}');
+      throw Exception('AI Error: ${e.message}');
     } catch (e) {
-      debugPrint('AI connection error: $e');
-      throw Exception('Failed to get AI response: $e');
+      throw Exception('Failed to connect: $e');
     }
+  }
+
+  Future<String> getChatResponse(List<Map<String, String>> messages) async {
+    // Prepend the personality/guide prompt for normal chat
+    final List<Map<String, String>> fullMessages = [
+      {'role': 'system', 'content': chatSystemPrompt},
+      ...messages,
+    ];
+    return _makeRawRequest(fullMessages);
   }
 
   /// This method asks the AI to extract structured data from the conversation
@@ -76,7 +73,7 @@ You MUST follow this exact sequence and ask only ONE thing at a time:
     List<Map<String, String>> conversationHistory,
   ) async {
     const extractionPrompt = '''
-You are a data extraction tool for a DSS. Analyze the chat and extract the decision components into JSON.
+You are a data extraction tool for a DSS. Analyze the chat and extract the **TOTAL CURRENT STATE** of the decision components into JSON.
 JSON Structure:
 {
   "title": string | null,
@@ -85,9 +82,10 @@ JSON Structure:
   "status": "gathering" | "ready" | "calculated"
 }
 Rules:
-- If a value is unknown, use null for title, or empty lists for criteria/alternatives.
+- You MUST return EVERY criterion and alternative ever mentioned in the chat history. 
+- Do not omit previous data just because you are discussing new data.
 - status is "gathering" while info is missing, "ready" once title, criteria, alternatives, and scores are present.
-Return ONLY JSON.
+- Return ONLY JSON.
 ''';
 
     final messages = [
@@ -97,12 +95,13 @@ Return ONLY JSON.
     ];
 
     try {
-      final response = await getChatResponse(messages);
+      final response = await _makeRawRequest(messages);
       // Clean the response if it contains markdown code blocks
-      String jsonStr = response
+      final String jsonStr = response
           .replaceAll('```json', '')
           .replaceAll('```', '')
           .trim();
+      debugPrint("--- Raw AI Data Extract: $jsonStr ---");
       return jsonDecode(jsonStr);
     } catch (e) {
       debugPrint('Extraction error: $e');

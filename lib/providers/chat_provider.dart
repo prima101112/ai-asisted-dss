@@ -134,41 +134,64 @@ class ChatNotifier extends StateNotifier<ChatState> {
     final data = await _aiService.extractStructuredData(history);
     if (data != null) {
       try {
+        final currentSession = state.session!;
+
+        // 1. Title Merge
+        final newTitle = data['title'] ?? currentSession.title;
+
+        // 2. Criteria Merge
+        // Only replace if extracted criteria is NOT empty
+        final extractedCriteria = (data['criteria'] as List?)
+            ?.map(
+              (c) => Criterion(
+                id: c['name'],
+                name: c['name'],
+                weight: (c['weight'] as num?)?.toDouble() ?? 1.0,
+                type: c['type'] == 'cost'
+                    ? CriterionType.cost
+                    : CriterionType.benefit,
+              ),
+            )
+            .toList();
+
+        final newCriteria =
+            (extractedCriteria != null && extractedCriteria.isNotEmpty)
+            ? extractedCriteria
+            : currentSession.criteria;
+
+        // 3. Alternatives Merge
+        final extractedAlternatives = (data['alternatives'] as List?)
+            ?.map(
+              (a) => Alternative(
+                id: a['name'],
+                name: a['name'],
+                scores:
+                    (a['scores'] as Map<String, dynamic>?)?.map(
+                      (k, v) => MapEntry(k, (v as num).toDouble()),
+                    ) ??
+                    {},
+              ),
+            )
+            .toList();
+
+        final newAlternatives =
+            (extractedAlternatives != null && extractedAlternatives.isNotEmpty)
+            ? extractedAlternatives
+            : currentSession.alternatives;
+
         final session = DecisionSession(
-          id: state.session!.id,
-          title: data['title'] ?? state.session!.title,
-          criteria:
-              (data['criteria'] as List?)
-                  ?.map(
-                    (c) => Criterion(
-                      id: c['name'],
-                      name: c['name'],
-                      weight: (c['weight'] as num?)?.toDouble() ?? 1.0,
-                      type: c['type'] == 'cost'
-                          ? CriterionType.cost
-                          : CriterionType.benefit,
-                    ),
-                  )
-                  .toList() ??
-              [],
-          alternatives:
-              (data['alternatives'] as List?)
-                  ?.map(
-                    (a) => Alternative(
-                      id: a['name'],
-                      name: a['name'],
-                      scores:
-                          (a['scores'] as Map<String, dynamic>?)?.map(
-                            (k, v) => MapEntry(k, (v as num).toDouble()),
-                          ) ??
-                          {},
-                    ),
-                  )
-                  .toList() ??
-              [],
-          createdAt: state.session!.createdAt,
-          status: data['status'] ?? 'gathering',
+          id: currentSession.id,
+          title: newTitle,
+          criteria: newCriteria,
+          alternatives: newAlternatives,
+          createdAt: currentSession.createdAt,
+          status: data['status'] ?? currentSession.status,
         );
+
+        debugPrint("--- Final Session for Firestore ---");
+        debugPrint("Criteria count: ${session.criteria.length}");
+        debugPrint("Alternatives count: ${session.alternatives.length}");
+        debugPrint("Raw JSON: ${session.toJson()}");
 
         state = state.copyWith(session: session);
         _firebaseService.saveSession(session);

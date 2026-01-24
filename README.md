@@ -1,5 +1,7 @@
 # Smart DSS AI Assistant 🚀
 
+![App Preview](docs/readme.png)
+
 A professional **AI-Assisted Decision Support System** built with Flutter. This app guides users through complex decision-making processes using a structured conversational interface and calculates rankings using standard DSS methods (**SAW, WP, and TOPSIS**).
 
 Created with ❤️ by:
