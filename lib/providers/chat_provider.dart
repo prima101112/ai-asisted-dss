@@ -7,6 +7,7 @@ import '../models/alternative.dart';
 import '../services/deepseek_service.dart';
 import '../services/firebase_service.dart';
 import '../logic/dss_engine.dart';
+import 'auth_provider.dart';
 
 class ChatMessage {
   final String content;
@@ -40,8 +41,17 @@ class ChatState {
   }
 }
 
+/// Provider for FirebaseService with user ID injected
+final firebaseServiceProvider = Provider<FirebaseService>((ref) {
+  final userId = ref.watch(currentUserIdProvider);
+  final service = FirebaseService();
+  service.setUserId(userId);
+  return service;
+});
+
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
-  return ChatNotifier(DeepSeekService(), FirebaseService());
+  final firebaseService = ref.watch(firebaseServiceProvider);
+  return ChatNotifier(DeepSeekService(), firebaseService);
 });
 
 class ChatNotifier extends StateNotifier<ChatState> {
