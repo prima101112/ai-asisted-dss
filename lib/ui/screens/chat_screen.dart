@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/decision_summary_card.dart';
 import '../widgets/result_table.dart';
@@ -126,6 +127,68 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 icon: const Icon(Icons.dashboard_customize_outlined),
                 onPressed: () => Scaffold.of(context).openEndDrawer(),
               );
+            },
+          ),
+          // User profile and logout
+          PopupMenuButton<String>(
+            icon: CircleAvatar(
+              radius: 16,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              child: ref.watch(currentUserProvider) != null
+                  ? Text(
+                      ref.watch(currentUserProvider)!.initials,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : const Icon(Icons.person, size: 18, color: Colors.white),
+            ),
+            onSelected: (value) async {
+              if (value == 'logout') {
+                final authService = ref.read(authServiceProvider);
+                await authService.signOut();
+              }
+            },
+            itemBuilder: (context) {
+              final user = ref.read(currentUserProvider);
+              return [
+                PopupMenuItem<String>(
+                  enabled: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        user?.displayNameOrEmail ?? 'User',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      if (user?.email != null)
+                        Text(
+                          user!.email!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
+                const PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout, size: 20),
+                      SizedBox(width: 8),
+                      Text('Sign Out'),
+                    ],
+                  ),
+                ),
+              ];
             },
           ),
         ],
