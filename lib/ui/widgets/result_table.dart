@@ -8,80 +8,151 @@ class ResultTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withAlpha(12),
             blurRadius: 10,
-            offset: const Offset(0, 5),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(
-            Theme.of(context).colorScheme.primary.withAlpha(30),
-          ),
-          columns: const [
-            DataColumn(
-              label: Text(
-                'Rank',
-                style: TextStyle(fontWeight: FontWeight.bold),
+        child: Column(
+          children: [
+            // Header row
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: colorScheme.primary.withAlpha(25),
               ),
-            ),
-            DataColumn(
-              label: Text(
-                'Alternative',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            DataColumn(
-              label: Text(
-                'Score',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-          rows: results.map((res) {
-            final isFirst = res.rank == 1;
-            final colorScheme = Theme.of(context).colorScheme;
-            return DataRow(
-              cells: [
-                DataCell(
-                  CircleAvatar(
-                    radius: 14,
-                    backgroundColor: isFirst
-                        ? colorScheme.secondary
-                        : colorScheme.surfaceContainerHighest,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 50,
                     child: Text(
-                      '${res.rank}',
+                      'Rank',
                       style: TextStyle(
-                        fontSize: 13,
-                        color: isFirst
-                            ? colorScheme.onSecondary
-                            : colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
-                ),
-                DataCell(
-                  Text(
-                    res.alternativeName,
-                    style: TextStyle(
-                      fontWeight: isFirst ? FontWeight.bold : FontWeight.normal,
+                  Expanded(
+                    child: Text(
+                      'Alternative',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                   ),
-                ),
-                DataCell(Text(res.score.toStringAsFixed(3))),
-              ],
-            );
-          }).toList(),
+                  SizedBox(
+                    width: 70,
+                    child: Text(
+                      'Score',
+                      textAlign: TextAlign.end,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Data rows
+            ...results.map((res) => _buildResultRow(context, res)),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildResultRow(BuildContext context, RankingResult res) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isTop3 = res.rank <= 3;
+    
+    // Medal colors aligned with history detail screen
+    Color? medalColor;
+    if (res.rank == 1) {
+      medalColor = const Color(0xFFFFD700); // Gold
+    } else if (res.rank == 2) {
+      medalColor = const Color(0xFFC0C0C0); // Silver
+    } else if (res.rank == 3) {
+      medalColor = const Color(0xFFCD7F32); // Bronze
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: colorScheme.outline.withAlpha(30),
+            width: 1,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          // Rank circle - aligned with history detail design
+          SizedBox(
+            width: 50,
+            child: CircleAvatar(
+              radius: 14,
+              backgroundColor: isTop3 && medalColor != null
+                  ? medalColor.withAlpha(40)
+                  : colorScheme.surfaceContainerHighest,
+              child: Text(
+                '${res.rank}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isTop3 && medalColor != null
+                      ? medalColor
+                      : colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+          // Alternative name with flexible space
+          Expanded(
+            child: Text(
+              res.alternativeName,
+              style: TextStyle(
+                fontWeight: isTop3 ? FontWeight.w600 : FontWeight.normal,
+                fontSize: 14,
+                color: colorScheme.onSurface,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
+            ),
+          ),
+          // Score - fixed width, right aligned
+          SizedBox(
+            width: 70,
+            child: Text(
+              res.score.toStringAsFixed(3),
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 14,
+                color: isTop3 && medalColor != null
+                    ? medalColor
+                    : colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
