@@ -382,19 +382,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       ),
       child: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             if (isReady) ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    l10n.translate('selectMethod'),
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                child: Text(
+                  l10n.translate('selectMethod'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ),
