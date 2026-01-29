@@ -68,16 +68,17 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   ChatNotifier(this._aiService, this._firebaseService)
     : super(ChatState(messages: [], session: null)) {
+    // Default to 'en' if not specified during init
     _initSession();
   }
 
-  void startNewDecision() {
-    _initSession();
+  void startNewDecision({String languageCode = 'en'}) {
+    _initSession(languageCode: languageCode);
   }
 
   /// Start a new decision using data from an existing history session
   /// Creates a NEW session with NEW id and timestamp, copies data from history
-  void startFromHistory(DecisionSession historySession) {
+  void startFromHistory(DecisionSession historySession, {String languageCode = 'en'}) {
     final newSession = DecisionSession(
       id: const Uuid().v4(), // New unique ID
       title: historySession.title,
@@ -88,21 +89,22 @@ class ChatNotifier extends StateNotifier<ChatState> {
       // Don't copy results - user may want to recalculate
     );
 
+    final welcomeBackMsg = languageCode == 'id'
+        ? "Selamat kembali! Saya telah memuat data keputusan Anda sebelumnya untuk '${historySession.title}'. Anda memiliki ${historySession.criteria.length} kriteria dan ${historySession.alternatives.length} alternatif yang siap. Apakah Anda ingin membuat perubahan atau melanjutkan untuk menghitung hasil?"
+        : "Welcome back! I've loaded your previous decision data for '${historySession.title}'. You have ${historySession.criteria.length} criteria and ${historySession.alternatives.length} alternatives ready. Would you like to make any changes or proceed to calculate the results?";
+
     state = ChatState(
       session: newSession,
       messages: [
         ChatMessage(
-          content:
-              "Welcome back! I've loaded your previous decision data for '${historySession.title}'. "
-              "You have ${historySession.criteria.length} criteria and ${historySession.alternatives.length} alternatives ready. "
-              "Would you like to make any changes or proceed to calculate the results?",
+          content: welcomeBackMsg,
           isUser: false,
         ),
       ],
     );
   }
 
-  void _initSession() {
+  void _initSession({String languageCode = 'en'}) {
     final session = DecisionSession(
       id: const Uuid().v4(),
       title: 'New Decision',
@@ -111,12 +113,16 @@ class ChatNotifier extends StateNotifier<ChatState> {
       createdAt: DateTime.now(),
       status: 'gathering',
     );
+
+    final welcomeMsg = languageCode == 'id'
+        ? "Halo! Saya asisten keputusan AI Anda. Apa yang ingin Anda putuskan hari ini?"
+        : "Hello! I'm your AI decision assistant. What would you like to decide today?";
+
     state = ChatState(
       session: session,
       messages: [
         ChatMessage(
-          content:
-              "Hello! I'm your AI decision assistant. What would you like to decide today?",
+          content: welcomeMsg,
           isUser: false,
         ),
       ],

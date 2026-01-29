@@ -109,7 +109,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return AppScaffold(
       title: l10n.translate('appTitle'),
       onNewChat: () {
-        ref.read(chatProvider.notifier).startNewDecision();
+        final languageCode = ref.read(localeProvider).languageCode;
+        ref.read(chatProvider.notifier).startNewDecision(languageCode: languageCode);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Starting new decision case...')),
         );

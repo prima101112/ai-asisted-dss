@@ -7,6 +7,7 @@ import '../../models/alternative.dart';
 import '../../providers/chat_provider.dart';
 import 'chat_screen.dart';
 import '../../l10n/app_localizations.dart';
+import '../../providers/locale_provider.dart';
 
 class HistoryDetailScreen extends ConsumerStatefulWidget {
   final DecisionSession session;
@@ -303,7 +304,8 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
               height: 56,
               child: FilledButton.icon(
                 onPressed: () {
-                  ref.read(chatProvider.notifier).startFromHistory(session);
+                  final languageCode = ref.read(localeProvider).languageCode;
+                  ref.read(chatProvider.notifier).startFromHistory(session, languageCode: languageCode);
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const ChatScreen()),
