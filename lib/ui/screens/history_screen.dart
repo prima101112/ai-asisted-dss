@@ -272,14 +272,17 @@ class _HistoryItemCard extends StatelessWidget {
                         size: 20,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        '${l10n.translate('best')}: ${session.results!.first.alternativeName}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.primary,
+                      Expanded(
+                        child: Text(
+                          '${l10n.translate('best')}: ${session.results!.first.alternativeName}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: colorScheme.primary,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       Text(
                         '${l10n.translate('score')}: ${session.results!.first.score.toStringAsFixed(2)}',
                         style: TextStyle(
