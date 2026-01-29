@@ -7,13 +7,70 @@ import '../../models/alternative.dart';
 import '../../providers/chat_provider.dart';
 import 'chat_screen.dart';
 
-class HistoryDetailScreen extends ConsumerWidget {
+class HistoryDetailScreen extends ConsumerStatefulWidget {
   final DecisionSession session;
 
   const HistoryDetailScreen({super.key, required this.session});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HistoryDetailScreen> createState() => _HistoryDetailScreenState();
+}
+
+class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
+  final ScrollController _scrollController = ScrollController();
+  bool _showScrollToTop = false;
+  
+  // Expansion states
+  bool _isRankingsExpanded = false;
+  bool _isCriteriaExpanded = false;
+  bool _isAlternativesExpanded = false;
+  
+  // Global keys for scroll targets
+  final GlobalKey _criteriaKey = GlobalKey();
+  final GlobalKey _alternativesKey = GlobalKey();
+  final GlobalKey _rankingsKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final showFab = _scrollController.offset > 200;
+    if (showFab != _showScrollToTop) {
+      setState(() => _showScrollToTop = showFab);
+    }
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOut,
+    );
+  }
+
+  void _scrollToSection(GlobalKey key) {
+    final context = key.currentContext;
+    if (context != null) {
+      Scrollable.ensureVisible(
+        context,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = widget.session;
     final colorScheme = Theme.of(context).colorScheme;
     final dateFormat = DateFormat('EEEE, dd MMMM yyyy • HH:mm');
 
@@ -47,7 +104,14 @@ class HistoryDetailScreen extends ConsumerWidget {
         title: const Text('Decision Detail'),
         centerTitle: true,
       ),
+      floatingActionButton: _showScrollToTop
+          ? FloatingActionButton.small(
+              onPressed: _scrollToTop,
+              child: const Icon(Icons.keyboard_arrow_up),
+            )
+          : null,
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -134,34 +198,43 @@ class HistoryDetailScreen extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
-            // Stats Cards
+            // Stats Cards - tappable to scroll
             Row(
               children: [
                 Expanded(
-                  child: _StatCard(
-                    icon: Icons.checklist,
-                    label: 'Criteria',
-                    value: '${session.criteria.length}',
-                    color: colorScheme.tertiary,
+                  child: GestureDetector(
+                    onTap: () => _scrollToSection(_criteriaKey),
+                    child: _StatCard(
+                      icon: Icons.checklist,
+                      label: 'Criteria',
+                      value: '${session.criteria.length}',
+                      color: colorScheme.tertiary,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: _StatCard(
-                    icon: Icons.compare_arrows,
-                    label: 'Alternatives',
-                    value: '${session.alternatives.length}',
-                    color: colorScheme.secondary,
+                  child: GestureDetector(
+                    onTap: () => _scrollToSection(_alternativesKey),
+                    child: _StatCard(
+                      icon: Icons.compare_arrows,
+                      label: 'Alternatives',
+                      value: '${session.alternatives.length}',
+                      color: colorScheme.secondary,
+                    ),
                   ),
                 ),
                 if (session.selectedMethod != null) ...[
                   const SizedBox(width: 12),
                   Expanded(
-                    child: _StatCard(
-                      icon: Icons.functions,
-                      label: 'Method',
-                      value: session.selectedMethod!.name.toUpperCase(),
-                      color: colorScheme.primary,
+                    child: GestureDetector(
+                      onTap: () => _scrollToSection(_rankingsKey),
+                      child: _StatCard(
+                        icon: Icons.functions,
+                        label: 'Method',
+                        value: session.selectedMethod!.name.toUpperCase(),
+                        color: colorScheme.primary,
+                      ),
                     ),
                   ),
                 ],
@@ -170,46 +243,55 @@ class HistoryDetailScreen extends ConsumerWidget {
 
             const SizedBox(height: 24),
 
-            // Results Section (with medals)
+            // Results Section (with medals) - expandable
             if (session.results != null && session.results!.isNotEmpty) ...[
-              _SectionHeader(
+              Container(key: _rankingsKey),
+              _ExpandableSection(
                 icon: Icons.emoji_events,
                 title: 'Rankings',
                 color: Colors.amber,
+                itemCount: session.results!.length,
+                isExpanded: _isRankingsExpanded,
+                onToggle: () => setState(() => _isRankingsExpanded = !_isRankingsExpanded),
+                items: session.results!.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final result = entry.value;
+                  return _RankingCard(
+                    rank: result.rank,
+                    name: result.alternativeName,
+                    score: result.score,
+                    isTop3: index < 3,
+                  );
+                }).toList(),
               ),
-              const SizedBox(height: 12),
-              ...session.results!.asMap().entries.map((entry) {
-                final index = entry.key;
-                final result = entry.value;
-                return _RankingCard(
-                  rank: result.rank,
-                  name: result.alternativeName,
-                  score: result.score,
-                  isTop3: index < 3,
-                );
-              }),
               const SizedBox(height: 24),
             ],
 
-            // Criteria Section
-            _SectionHeader(
+            // Criteria Section - expandable
+            Container(key: _criteriaKey),
+            _ExpandableSection(
               icon: Icons.tune,
               title: 'Criteria Details',
               color: colorScheme.tertiary,
+              itemCount: session.criteria.length,
+              isExpanded: _isCriteriaExpanded,
+              onToggle: () => setState(() => _isCriteriaExpanded = !_isCriteriaExpanded),
+              items: session.criteria.map((c) => _CriteriaCard(criterion: c)).toList(),
             ),
-            const SizedBox(height: 12),
-            ...session.criteria.map((c) => _CriteriaCard(criterion: c)),
 
             const SizedBox(height: 24),
 
-            // Alternatives Section
-            _SectionHeader(
+            // Alternatives Section - expandable
+            Container(key: _alternativesKey),
+            _ExpandableSection(
               icon: Icons.list_alt,
               title: 'Alternatives',
               color: colorScheme.secondary,
+              itemCount: session.alternatives.length,
+              isExpanded: _isAlternativesExpanded,
+              onToggle: () => setState(() => _isAlternativesExpanded = !_isAlternativesExpanded),
+              items: session.alternatives.map((a) => _AlternativeCard(alternative: a)).toList(),
             ),
-            const SizedBox(height: 12),
-            ...session.alternatives.map((a) => _AlternativeCard(alternative: a)),
 
             const SizedBox(height: 32),
 
@@ -246,29 +328,91 @@ class HistoryDetailScreen extends ConsumerWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
+// Expandable section widget
+class _ExpandableSection extends StatelessWidget {
   final IconData icon;
   final String title;
   final Color color;
+  final int itemCount;
+  final bool isExpanded;
+  final VoidCallback onToggle;
+  final List<Widget> items;
+  
+  static const int _collapsedLimit = 3;
 
-  const _SectionHeader({
+  const _ExpandableSection({
     required this.icon,
     required this.title,
     required this.color,
+    required this.itemCount,
+    required this.isExpanded,
+    required this.onToggle,
+    required this.items,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final colorScheme = Theme.of(context).colorScheme;
+    final showExpandButton = items.length > _collapsedLimit;
+    final displayItems = isExpanded ? items : items.take(_collapsedLimit).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+        // Header
+        Row(
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: color.withAlpha(30),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$itemCount',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ),
+          ],
         ),
+        const SizedBox(height: 12),
+        
+        // Items
+        ...displayItems,
+        
+        // Expand/Collapse button
+        if (showExpandButton)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Center(
+              child: TextButton.icon(
+                onPressed: onToggle,
+                icon: Icon(
+                  isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  color: colorScheme.primary,
+                ),
+                label: Text(
+                  isExpanded 
+                      ? 'Show less' 
+                      : 'Show ${items.length - _collapsedLimit} more',
+                  style: TextStyle(color: colorScheme.primary),
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
