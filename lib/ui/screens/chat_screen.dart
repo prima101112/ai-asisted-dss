@@ -380,7 +380,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: TextField(
                 controller: _controller,
                 decoration: InputDecoration(
-                  hintText: l10n.translate('typePlaceholder'),
+                  hintText: l10n.translate('typeMessage'),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,
