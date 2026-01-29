@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/decision_summary_card.dart';
 import '../widgets/result_table.dart';
@@ -134,26 +135,111 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       child: Column(
         children: [
           Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount:
-                  chatState.messages.length + (chatState.isLoading ? 1 : 0),
-              itemBuilder: (context, index) {
-                if (index == chatState.messages.length) {
-                  return const Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                final msg = chatState.messages[index];
-                return ChatBubble(message: msg.content, isUser: msg.isUser);
-              },
-            ),
+            child: _isInitialState(chatState)
+                ? _buildHomeView(context, chatNotifier)
+                : ListView.builder(
+                    controller: _scrollController,
+                    itemCount:
+                        chatState.messages.length + (chatState.isLoading ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == chatState.messages.length) {
+                        return const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      final msg = chatState.messages[index];
+                      return ChatBubble(message: msg.content, isUser: msg.isUser);
+                    },
+                  ),
           ),
           _buildInputArea(chatNotifier),
         ],
       ),
     );
+  }
+
+  /// Check if we're in initial state (only welcome message, no user interaction yet)
+  bool _isInitialState(ChatState state) {
+    return state.messages.length == 1 && 
+           !state.messages.first.isUser &&
+           !state.isLoading;
+  }
+
+  /// Build Gemini-style home view with greeting and suggestions
+  Widget _buildHomeView(BuildContext context, ChatNotifier notifier) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final user = ref.watch(currentUserProvider);
+    final firstName = user?.displayName?.split(' ').first ?? 'User';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 40),
+          // Greeting
+          Text(
+            'Hi $firstName 👋',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'What decision do you\nneed help with?',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 40),
+          
+          // Suggestion chips
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _SuggestionChip(
+                emoji: '🎯',
+                label: 'Choose best option',
+                onTap: () => _sendSuggestion(notifier, 'I want to compare several options and find the best one'),
+              ),
+              _SuggestionChip(
+                emoji: '💼',
+                label: 'Job or career decision',
+                onTap: () => _sendSuggestion(notifier, 'I need help deciding between job opportunities'),
+              ),
+              _SuggestionChip(
+                emoji: '🛒',
+                label: 'Purchase decision',
+                onTap: () => _sendSuggestion(notifier, 'I want to compare products before making a purchase'),
+              ),
+              _SuggestionChip(
+                emoji: '🏠',
+                label: 'Location or place',
+                onTap: () => _sendSuggestion(notifier, 'I need help choosing between different locations'),
+              ),
+              _SuggestionChip(
+                emoji: '📊',
+                label: 'Business strategy',
+                onTap: () => _sendSuggestion(notifier, 'I want to evaluate business strategies or investments'),
+              ),
+              _SuggestionChip(
+                emoji: '✨',
+                label: 'Something else',
+                onTap: () => _sendSuggestion(notifier, 'I have a decision to make'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _sendSuggestion(ChatNotifier notifier, String message) {
+    notifier.sendMessage(message);
+    _scrollToBottom();
   }
 
   void _showInsightsPanel(BuildContext context, ChatState chatState, ChatNotifier chatNotifier) {
@@ -308,6 +394,59 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SuggestionChip extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final VoidCallback onTap;
+
+  const _SuggestionChip({
+    required this.emoji,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(24),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerHighest.withAlpha(150),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: colorScheme.outline.withAlpha(50),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                emoji,
+                style: const TextStyle(fontSize: 18),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
