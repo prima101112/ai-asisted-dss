@@ -6,6 +6,8 @@ import '../../models/criterion.dart';
 import '../../models/alternative.dart';
 import '../../providers/chat_provider.dart';
 import 'chat_screen.dart';
+import '../../l10n/app_localizations.dart';
+import '../../providers/locale_provider.dart';
 
 class HistoryDetailScreen extends ConsumerStatefulWidget {
   final DecisionSession session;
@@ -72,6 +74,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
   Widget build(BuildContext context) {
     final session = widget.session;
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final dateFormat = DateFormat('EEEE, dd MMMM yyyy • HH:mm');
 
     // Determine status styling
@@ -82,17 +85,17 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
       case 'calculated':
         statusColor = Colors.green;
         statusIcon = Icons.check_circle;
-        statusText = 'Completed';
+        statusText = l10n.translate('completed');
         break;
       case 'ready':
         statusColor = Colors.orange;
         statusIcon = Icons.pending;
-        statusText = 'Ready to Calculate';
+        statusText = l10n.translate('readyToCalculate');
         break;
       default:
         statusColor = Colors.blue;
         statusIcon = Icons.edit_note;
-        statusText = 'In Progress';
+        statusText = l10n.translate('inProgress');
     }
 
     return Scaffold(
@@ -101,7 +104,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Decision Detail'),
+        title: Text(l10n.translate('decisionDetail')),
         centerTitle: true,
       ),
       floatingActionButton: _showScrollToTop
@@ -206,7 +209,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
                     onTap: () => _scrollToSection(_criteriaKey),
                     child: _StatCard(
                       icon: Icons.checklist,
-                      label: 'Criteria',
+                      label: l10n.translate('criteria'),
                       value: '${session.criteria.length}',
                       color: colorScheme.tertiary,
                     ),
@@ -218,7 +221,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
                     onTap: () => _scrollToSection(_alternativesKey),
                     child: _StatCard(
                       icon: Icons.compare_arrows,
-                      label: 'Alternatives',
+                      label: l10n.translate('alternatives'),
                       value: '${session.alternatives.length}',
                       color: colorScheme.secondary,
                     ),
@@ -231,7 +234,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
                       onTap: () => _scrollToSection(_rankingsKey),
                       child: _StatCard(
                         icon: Icons.functions,
-                        label: 'Method',
+                        label: l10n.translate('method'),
                         value: session.selectedMethod!.name.toUpperCase(),
                         color: colorScheme.primary,
                       ),
@@ -248,7 +251,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
               Container(key: _rankingsKey),
               _ExpandableSection(
                 icon: Icons.emoji_events,
-                title: 'Rankings',
+                title: l10n.translate('rankings'),
                 color: Colors.amber,
                 itemCount: session.results!.length,
                 isExpanded: _isRankingsExpanded,
@@ -271,7 +274,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
             Container(key: _criteriaKey),
             _ExpandableSection(
               icon: Icons.tune,
-              title: 'Criteria Details',
+              title: l10n.translate('criteriaDetails'),
               color: colorScheme.tertiary,
               itemCount: session.criteria.length,
               isExpanded: _isCriteriaExpanded,
@@ -285,7 +288,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
             Container(key: _alternativesKey),
             _ExpandableSection(
               icon: Icons.list_alt,
-              title: 'Alternatives',
+              title: l10n.translate('alternatives'),
               color: colorScheme.secondary,
               itemCount: session.alternatives.length,
               isExpanded: _isAlternativesExpanded,
@@ -301,7 +304,8 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
               height: 56,
               child: FilledButton.icon(
                 onPressed: () {
-                  ref.read(chatProvider.notifier).startFromHistory(session);
+                  final languageCode = ref.read(localeProvider).languageCode;
+                  ref.read(chatProvider.notifier).startFromHistory(session, languageCode: languageCode);
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const ChatScreen()),
@@ -309,9 +313,9 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
                   );
                 },
                 icon: const Icon(Icons.replay),
-                label: const Text(
-                  'Use This Data Again',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                label: Text(
+                  l10n.translate('useDataAgain'),
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
                 style: FilledButton.styleFrom(
                   shape: RoundedRectangleBorder(
@@ -353,6 +357,7 @@ class _ExpandableSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final showExpandButton = items.length > _collapsedLimit;
     final displayItems = isExpanded ? items : items.take(_collapsedLimit).toList();
 
@@ -406,8 +411,8 @@ class _ExpandableSection extends StatelessWidget {
                 ),
                 label: Text(
                   isExpanded 
-                      ? 'Show less' 
-                      : 'Show ${items.length - _collapsedLimit} more',
+                      ? l10n.translate('showLess')
+                      : l10n.translate('showMore').replaceAll('{count}', '${items.length - _collapsedLimit}'),
                   style: TextStyle(color: colorScheme.primary),
                 ),
               ),
@@ -481,6 +486,7 @@ class _RankingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     
     // Medal colors based on rank
     Color? medalColor;
@@ -572,7 +578,7 @@ class _RankingCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Rank #$rank',
+                  l10n.translate('rankNum').replaceAll('{rank}', '$rank'),
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
@@ -615,6 +621,7 @@ class _CriteriaCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final isBenefit = criterion.type == CriterionType.benefit;
 
     return Container(
@@ -651,7 +658,7 @@ class _CriteriaCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  isBenefit ? 'Benefit (Higher is better)' : 'Cost (Lower is better)',
+                  isBenefit ? l10n.translate('benefitDescription') : l10n.translate('costDescription'),
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
@@ -667,7 +674,7 @@ class _CriteriaCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
-              'Weight: ${criterion.weight}',
+              '${l10n.translate('weight')}: ${criterion.weight}',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
@@ -689,6 +696,7 @@ class _AlternativeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -730,7 +738,7 @@ class _AlternativeCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                '${alternative.scores.length} scores',
+                l10n.translate('scoreCount').replaceAll('{count}', '${alternative.scores.length}'),
                 style: TextStyle(
                   fontSize: 11,
                   color: colorScheme.onSurfaceVariant,

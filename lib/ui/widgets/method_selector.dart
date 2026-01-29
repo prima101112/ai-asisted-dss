@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/decision_session.dart';
+import '../../l10n/app_localizations.dart';
 
 class MethodSelector extends StatelessWidget {
   final Function(DSSMethod) onSelected;
@@ -13,12 +14,14 @@ class MethodSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Select Calculation Method:',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        Text(
+          l10n.translate('selectMethod'),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
         const SizedBox(height: 12),
         Wrap(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/decision_session.dart';
+import '../../l10n/app_localizations.dart';
 
 class ResultTable extends StatelessWidget {
   final List<RankingResult> results;
@@ -9,6 +10,7 @@ class ResultTable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
 
     return Container(
       decoration: BoxDecoration(
@@ -37,7 +39,7 @@ class ResultTable extends StatelessWidget {
                   SizedBox(
                     width: 50,
                     child: Text(
-                      'Rank',
+                      l10n.translate('rank'),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
@@ -47,7 +49,7 @@ class ResultTable extends StatelessWidget {
                   ),
                   Expanded(
                     child: Text(
-                      'Alternative',
+                      l10n.translate('alternative'),
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 13,
@@ -58,7 +60,7 @@ class ResultTable extends StatelessWidget {
                   SizedBox(
                     width: 70,
                     child: Text(
-                      'Score',
+                      l10n.translate('score'),
                       textAlign: TextAlign.end,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
