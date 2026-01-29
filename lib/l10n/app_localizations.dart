@@ -84,6 +84,10 @@ class AppLocalizations {
       'costDescription': 'Cost (Lower is better)',
       'weight': 'Weight',
       'scoreCount': '{count} scores',
+      'theme': 'Theme',
+      'lightTheme': 'Light',
+      'darkTheme': 'Dark',
+      'systemTheme': 'System',
     },
     'id': {
       'appTitle': 'Asisten Keputusan AI',
@@ -155,6 +159,10 @@ class AppLocalizations {
       'costDescription': 'Cost (Lebih rendah lebih baik)',
       'weight': 'Bobot',
       'scoreCount': '{count} nilai',
+      'theme': 'Tema',
+      'lightTheme': 'Terang',
+      'darkTheme': 'Gelap',
+      'systemTheme': 'Sistem',
     },
   };
 

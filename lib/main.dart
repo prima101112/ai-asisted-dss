@@ -10,6 +10,7 @@ import 'ui/screens/login_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'providers/locale_provider.dart';
+import 'providers/theme_provider.dart';
 import 'l10n/app_localizations.dart';
 
 void main() async {
@@ -66,6 +67,7 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final locale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeProvider);
 
     return MaterialApp(
       title: 'AI Assisted DSS',
@@ -86,7 +88,7 @@ class MyApp extends ConsumerWidget {
           brightness: Brightness.dark,
         ),
       ),
-      themeMode: ThemeMode.system,
+      themeMode: themeMode,
       locale: locale,
       localizationsDelegates: const [
         AppLocalizations.delegate,
