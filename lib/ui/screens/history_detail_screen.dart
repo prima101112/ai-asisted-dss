@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/decision_session.dart';
+import '../../models/criterion.dart';
+import '../../models/alternative.dart';
 import '../../providers/chat_provider.dart';
-import '../widgets/app_scaffold.dart';
 import 'chat_screen.dart';
 
 class HistoryDetailScreen extends ConsumerWidget {
@@ -37,20 +38,16 @@ class HistoryDetailScreen extends ConsumerWidget {
         statusText = 'In Progress';
     }
 
-    return AppScaffold(
-      title: 'Decision Detail',
-      onNewChat: () {
-        ref.read(chatProvider.notifier).startNewDecision();
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const ChatScreen()),
-          (route) => false,
-        );
-      },
-      onHistoryTap: () {
-        Navigator.pop(context);
-      },
-      child: SingleChildScrollView(
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Decision Detail'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -467,14 +464,14 @@ class _RankingCard extends StatelessWidget {
 }
 
 class _CriteriaCard extends StatelessWidget {
-  final dynamic criterion;
+  final Criterion criterion;
 
   const _CriteriaCard({required this.criterion});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final isBenefit = criterion.type.name == 'benefit';
+    final isBenefit = criterion.type == CriterionType.benefit;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -541,7 +538,7 @@ class _CriteriaCard extends StatelessWidget {
 }
 
 class _AlternativeCard extends StatelessWidget {
-  final dynamic alternative;
+  final Alternative alternative;
 
   const _AlternativeCard({required this.alternative});
 
