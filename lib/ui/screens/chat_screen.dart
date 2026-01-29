@@ -384,19 +384,25 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Column(
           children: [
             if (isReady) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    l10n.translate('selectMethod'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.only(bottom: 12),
                 child: Row(
                   children: [
-                    Text(
-                      l10n.translate('selectMethod'),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     _MethodChip(
                       label: 'SAW',
                       onTap: () {
