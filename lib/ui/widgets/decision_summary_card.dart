@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/decision_session.dart';
+import '../../l10n/app_localizations.dart';
 
 class DecisionSummaryCard extends StatelessWidget {
   final DecisionSession session;
@@ -9,6 +10,7 @@ class DecisionSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     
     // Status styling - aligned with history detail screen
     Color statusColor;
@@ -18,17 +20,17 @@ class DecisionSummaryCard extends StatelessWidget {
       case 'calculated':
         statusColor = Colors.green;
         statusIcon = Icons.check_circle;
-        statusText = 'CALCULATED';
+        statusText = l10n.translate('calculated');
         break;
       case 'ready':
         statusColor = Colors.orange;
         statusIcon = Icons.pending;
-        statusText = 'READY';
+        statusText = l10n.translate('ready');
         break;
       default:
         statusColor = Colors.blue;
         statusIcon = Icons.edit_note;
-        statusText = 'GATHERING';
+        statusText = l10n.translate('gathering');
     }
 
     return Container(
@@ -69,7 +71,7 @@ class DecisionSummaryCard extends StatelessWidget {
                     Icon(statusIcon, size: 14, color: statusColor),
                     const SizedBox(width: 6),
                     Text(
-                      'Current Status: $statusText',
+                      '${l10n.translate('currentStatus')}: $statusText',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -85,21 +87,21 @@ class DecisionSummaryCard extends StatelessWidget {
           // Title row - with proper overflow handling
           _buildInfoRow(
             context,
-            'Title',
+            l10n.translate('title'),
             session.title,
             isTitle: true,
           ),
           const SizedBox(height: 10),
           _buildInfoRow(
             context,
-            'Criteria',
-            '${session.criteria.length} defined',
+            l10n.translate('criteria'),
+            '${session.criteria.length} ${l10n.translate('defined')}',
           ),
           const SizedBox(height: 8),
           _buildInfoRow(
             context,
-            'Alternatives',
-            '${session.alternatives.length} defined',
+            l10n.translate('alternatives'),
+            '${session.alternatives.length} ${l10n.translate('defined')}',
           ),
         ],
       ),

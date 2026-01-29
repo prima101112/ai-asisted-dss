@@ -8,6 +8,7 @@ import '../widgets/result_table.dart';
 import '../widgets/method_selector.dart';
 import '../widgets/app_scaffold.dart';
 import 'history_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -100,9 +101,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget build(BuildContext context) {
     final chatState = ref.watch(chatProvider);
     final chatNotifier = ref.read(chatProvider.notifier);
+    final l10n = AppLocalizations.of(context);
 
     return AppScaffold(
-      title: 'AI Decision Assistant',
+      title: l10n.translate('appTitle'),
       onNewChat: () {
         ref.read(chatProvider.notifier).startNewDecision();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -126,7 +128,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           builder: (context) {
             return IconButton(
               icon: const Icon(Icons.analytics_outlined),
-              tooltip: 'Decision Insights',
+              tooltip: l10n.translate('decisionInsights'),
               onPressed: () => _showInsightsPanel(context, chatState, chatNotifier),
             );
           },
@@ -177,6 +179,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final colorScheme = Theme.of(context).colorScheme;
     final user = ref.watch(currentUserProvider);
     final firstName = user?.displayName?.split(' ').first ?? 'User';
+    final l10n = AppLocalizations.of(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -186,14 +189,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           const SizedBox(height: 24),
           // Greeting
           Text(
-            'Hi $firstName 👋',
+            '${l10n.translate('helloGreeting')} $firstName 👋',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            'What decision do you\nneed help with?',
+            l10n.translate('whatHelp'),
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
               height: 1.2,
@@ -208,32 +211,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             children: [
               _SuggestionChip(
                 emoji: '🎯',
-                label: 'Choose best option',
+                label: l10n.translate('chooseBestOption'),
                 onTap: () => _sendSuggestion(notifier, 'I want to compare several options and find the best one'),
               ),
               _SuggestionChip(
                 emoji: '💼',
-                label: 'Job or career decision',
+                label: l10n.translate('jobCareer'),
                 onTap: () => _sendSuggestion(notifier, 'I need help deciding between job opportunities'),
               ),
               _SuggestionChip(
                 emoji: '🛒',
-                label: 'Purchase decision',
+                label: l10n.translate('purchaseDecision'),
                 onTap: () => _sendSuggestion(notifier, 'I want to compare products before making a purchase'),
               ),
               _SuggestionChip(
                 emoji: '🏠',
-                label: 'Location or place',
+                label: l10n.translate('locationPlace'),
                 onTap: () => _sendSuggestion(notifier, 'I need help choosing between different locations'),
               ),
               _SuggestionChip(
                 emoji: '📊',
-                label: 'Business strategy',
+                label: l10n.translate('businessStrategy'),
                 onTap: () => _sendSuggestion(notifier, 'I want to evaluate business strategies or investments'),
               ),
               _SuggestionChip(
                 emoji: '✨',
-                label: 'Something else',
+                label: l10n.translate('somethingElse'),
                 onTap: () => _sendSuggestion(notifier, 'I have a decision to make'),
               ),
             ],
@@ -260,6 +263,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           // Watch the provider to rebuild when state changes
           final currentState = ref.watch(chatProvider);
           final notifier = ref.read(chatProvider.notifier);
+          final l10n = AppLocalizations.of(context);
           
           // Auto-expand to full height when results are available
           final hasResults = currentState.session?.results != null &&
@@ -289,7 +293,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Decision Insights',
+                    l10n.translate('decisionInsights'),
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -310,9 +314,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ],
                     if (currentState.session!.results != null &&
                         currentState.session!.results!.isNotEmpty) ...[
-                      const Text(
-                        'Rankings',
-                        style: TextStyle(
+                      Text(
+                        l10n.translate('rankings'),
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -326,7 +330,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         child: Padding(
                           padding: const EdgeInsets.all(24),
                           child: Text(
-                            'Gather more info or select a method to see results.',
+                            l10n.translate('gatherMoreInfo'),
                             textAlign: TextAlign.center,
                             style: TextStyle(color: Theme.of(context).colorScheme.outline),
                           ),
@@ -338,7 +342,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       child: Padding(
                         padding: const EdgeInsets.all(24),
                         child: Text(
-                          'Start a conversation to gather decision data.',
+                          l10n.translate('startConversation'),
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Theme.of(context).colorScheme.outline),
                         ),
@@ -355,6 +359,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   Widget _buildInputArea(ChatNotifier notifier) {
+    final l10n = AppLocalizations.of(context);
+    
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -374,7 +380,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: TextField(
                 controller: _controller,
                 decoration: InputDecoration(
-                  hintText: 'Type your message...',
+                  hintText: l10n.translate('typePlaceholder'),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
                     borderSide: BorderSide.none,

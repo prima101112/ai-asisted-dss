@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/locale_provider.dart';
+import '../../l10n/app_localizations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -47,6 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
   }
 
   Future<void> _signInWithGoogle() async {
+    final l10n = AppLocalizations.of(context);
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -58,14 +61,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
       if (result == null && mounted) {
         setState(() {
-          _errorMessage = 'Sign in was cancelled';
+          _errorMessage = l10n.translate('signInCancelled');
           _isLoading = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _errorMessage = 'Failed to sign in. Please try again.';
+          _errorMessage = l10n.translate('signInFailed');
           _isLoading = false;
         });
       }
@@ -77,6 +80,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final isDark = theme.brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
+    final locale = ref.watch(localeProvider);
 
     return Scaffold(
       body: Container(
@@ -98,164 +103,199 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(32.0),
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+          child: Stack(
+            children: [
+              // Language Switcher
+              Positioned(
+                top: 16,
+                right: 16,
+                child: FilledButton.tonal(
+                  onPressed: () {
+                    ref.read(localeProvider.notifier).toggleLocale();
+                  },
+                  style: FilledButton.styleFrom(
+                    shape: const StadiumBorder(),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // App Icon / Logo
-                      Container(
-                        width: 120,
-                        height: 120,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              colorScheme.primary,
-                              colorScheme.secondary,
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: colorScheme.primary.withAlpha(76),
-                              blurRadius: 30,
-                              offset: const Offset(0, 10),
-                            ),
-                          ],
-                        ),
-                        child: const Icon(
-                          Icons.auto_awesome,
-                          size: 60,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-
-                      // App Name
                       Text(
-                        'AI Decision Assistant',
-                        style: theme.textTheme.headlineMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
-                        ),
-                        textAlign: TextAlign.center,
+                        locale.languageCode == 'en' ? '🇺🇸' : '🇮🇩',
+                        style: const TextStyle(fontSize: 18),
                       ),
-                      const SizedBox(height: 12),
-
-                      // Tagline
+                      const SizedBox(width: 8),
                       Text(
-                        'Make smarter decisions with AI',
-                        style: theme.textTheme.bodyLarge?.copyWith(
-                          color: colorScheme.onSurface.withAlpha(178),
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 60),
-
-                      // Error Message
-                      if (_errorMessage != null) ...[
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          margin: const EdgeInsets.only(bottom: 24),
-                          decoration: BoxDecoration(
-                            color: colorScheme.errorContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: colorScheme.onErrorContainer,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  _errorMessage!,
-                                  style: TextStyle(
-                                    color: colorScheme.onErrorContainer,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-
-                      // Google Sign In Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isLoading ? null : _signInWithGoogle,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                isDark ? Colors.white : Colors.white,
-                            foregroundColor: Colors.black87,
-                            elevation: 2,
-                            shadowColor: Colors.black26,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                              side: BorderSide(
-                                color: Colors.grey.withAlpha(51),
-                              ),
-                            ),
-                          ),
-                          child: _isLoading
-                              ? SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: colorScheme.primary,
-                                  ),
-                                )
-                              : Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Image.network(
-                                      'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
-                                      height: 24,
-                                      width: 24,
-                                      errorBuilder: (_, _, _) => const Icon(
-                                        Icons.g_mobiledata,
-                                        size: 28,
-                                        color: Colors.red,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'Sign in with Google',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-
-                      // Terms text
-                      Text(
-                        'By signing in, you agree to our Terms of Service\nand Privacy Policy',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: colorScheme.onSurface.withAlpha(127),
-                        ),
-                        textAlign: TextAlign.center,
+                        locale.languageCode == 'en' ? 'EN' : 'ID',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32.0),
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // App Icon / Logo
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  colorScheme.primary,
+                                  colorScheme.secondary,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(30),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: colorScheme.primary.withAlpha(76),
+                                  blurRadius: 30,
+                                  offset: const Offset(0, 10),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.auto_awesome,
+                              size: 60,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+
+                          // App Name
+                          Text(
+                            l10n.translate('appTitle'),
+                            style: theme.textTheme.headlineMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: colorScheme.onSurface,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Tagline
+                          Text(
+                            l10n.translate('tagline'),
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: colorScheme.onSurface.withAlpha(178),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 60),
+
+                          // Error Message
+                          if (_errorMessage != null) ...[
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              margin: const EdgeInsets.only(bottom: 24),
+                              decoration: BoxDecoration(
+                                color: colorScheme.errorContainer,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: colorScheme.onErrorContainer,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      _errorMessage!,
+                                      style: TextStyle(
+                                        color: colorScheme.onErrorContainer,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+
+                          // Google Sign In Button
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _signInWithGoogle,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    isDark ? Colors.white : Colors.white,
+                                foregroundColor: Colors.black87,
+                                elevation: 2,
+                                shadowColor: Colors.black26,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  side: BorderSide(
+                                    color: Colors.grey.withAlpha(51),
+                                  ),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2.5,
+                                        color: colorScheme.primary,
+                                      ),
+                                    )
+                                  : Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Image.network(
+                                          'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
+                                          height: 24,
+                                          width: 24,
+                                          errorBuilder: (_, _, _) => const Icon(
+                                            Icons.g_mobiledata,
+                                            size: 28,
+                                            color: Colors.red,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          l10n.translate('signInGoogle'),
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+
+                          // Terms text
+                          Text(
+                            l10n.translate('termsText'),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurface.withAlpha(127),
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),

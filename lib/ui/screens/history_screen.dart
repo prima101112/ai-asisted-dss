@@ -5,6 +5,7 @@ import '../../models/decision_session.dart';
 import '../../providers/chat_provider.dart';
 import 'chat_screen.dart';
 import 'history_detail_screen.dart';
+import '../../l10n/app_localizations.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -12,6 +13,7 @@ class HistoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final firebaseService = ref.watch(firebaseServiceProvider);
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -19,7 +21,7 @@ class HistoryScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Decision History'),
+        title: Text(l10n.translate('decisionHistory')),
         centerTitle: true,
       ),
       body: StreamBuilder<List<DecisionSession>>(
@@ -41,7 +43,7 @@ class HistoryScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Error loading history',
+                    l10n.translate('errorLoading'),
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
                   const SizedBox(height: 8),
@@ -71,17 +73,18 @@ class HistoryScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    'No decision history yet',
+                    l10n.translate('noHistory'),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Start a new chat to make your first decision',
+                    l10n.translate('startConversation'),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.outline,
                     ),
+                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   FilledButton.icon(
@@ -93,7 +96,7 @@ class HistoryScreen extends ConsumerWidget {
                       );
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('Start New Decision'),
+                    label: Text(l10n.translate('startNewDecision')),
                   ),
                 ],
               ),
@@ -135,23 +138,29 @@ class _HistoryItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
     final dateFormat = DateFormat('dd MMM yyyy, HH:mm');
 
     // Determine status color
     Color statusColor;
     IconData statusIcon;
+    String statusText;
+    
     switch (session.status) {
       case 'calculated':
         statusColor = Colors.green;
         statusIcon = Icons.check_circle;
+        statusText = l10n.translate('calculated');
         break;
       case 'ready':
         statusColor = Colors.orange;
         statusIcon = Icons.pending;
+        statusText = l10n.translate('ready');
         break;
       default:
         statusColor = Colors.blue;
         statusIcon = Icons.edit_note;
+        statusText = l10n.translate('gathering');
     }
 
     return Card(
@@ -214,7 +223,7 @@ class _HistoryItemCard extends StatelessWidget {
                         Icon(statusIcon, size: 14, color: statusColor),
                         const SizedBox(width: 4),
                         Text(
-                          session.status.toUpperCase(),
+                          statusText,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -234,13 +243,13 @@ class _HistoryItemCard extends StatelessWidget {
                 children: [
                   _StatChip(
                     icon: Icons.checklist,
-                    label: '${session.criteria.length} Criteria',
+                    label: '${session.criteria.length} ${l10n.translate('criteria')}',
                     color: colorScheme.tertiary,
                   ),
                   const SizedBox(width: 8),
                   _StatChip(
                     icon: Icons.compare_arrows,
-                    label: '${session.alternatives.length} Alternatives',
+                    label: '${session.alternatives.length} ${l10n.translate('alternatives')}',
                     color: colorScheme.secondary,
                   ),
                 ],
@@ -264,7 +273,7 @@ class _HistoryItemCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Best: ${session.results!.first.alternativeName}',
+                        '${l10n.translate('best')}: ${session.results!.first.alternativeName}',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: colorScheme.primary,
@@ -272,7 +281,7 @@ class _HistoryItemCard extends StatelessWidget {
                       ),
                       const Spacer(),
                       Text(
-                        'Score: ${session.results!.first.score.toStringAsFixed(2)}',
+                        '${l10n.translate('score')}: ${session.results!.first.score.toStringAsFixed(2)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: colorScheme.primary,
@@ -291,7 +300,7 @@ class _HistoryItemCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onUseAgain,
                   icon: const Icon(Icons.replay, size: 18),
-                  label: const Text('Use Again'),
+                  label: Text(l10n.translate('useAgain')),
                   style: OutlinedButton.styleFrom(
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

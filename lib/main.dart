@@ -7,6 +7,11 @@ import 'providers/auth_provider.dart';
 import 'ui/screens/chat_screen.dart';
 import 'ui/screens/login_screen.dart';
 
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'providers/locale_provider.dart';
+import 'l10n/app_localizations.dart';
+
 void main() async {
   // 1. Ensure bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,15 +37,36 @@ void main() async {
     debugPrint("Firebase initialization failure: $e");
   }
 
-  // 4. Start the app after Firebase is ready
-  runApp(const ProviderScope(child: MyApp()));
+  // 4. Initialize SharedPreferences
+  late final SharedPreferences prefs;
+  try {
+    prefs = await SharedPreferences.getInstance();
+    debugPrint("--- SharedPreferences Initialized ---");
+  } catch (e) {
+    debugPrint("SharedPreferences initialization failure: $e");
+    // Fallback if prefs fail, though unlikely
+    // In a real app we might want to handle this more gracefully
+    rethrow;
+  }
+
+  // 5. Start the app after initialization
+  runApp(
+    ProviderScope(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final locale = ref.watch(localeProvider);
+
     return MaterialApp(
       title: 'AI Assisted DSS',
       debugShowCheckedModeBanner: false,
@@ -61,6 +87,17 @@ class MyApp extends StatelessWidget {
         ),
       ),
       themeMode: ThemeMode.system,
+      locale: locale,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('id'),
+      ],
       home: const AuthWrapper(),
     );
   }
