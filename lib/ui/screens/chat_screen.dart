@@ -10,7 +10,8 @@ import '../widgets/method_selector.dart';
 import '../widgets/app_scaffold.dart';
 import 'history_screen.dart';
 import '../../l10n/app_localizations.dart';
-import '../../logic/dss_engine.dart';
+
+import '../../models/decision_session.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
