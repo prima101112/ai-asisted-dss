@@ -294,7 +294,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     currentMethod: chatState.session!.selectedMethod,
                     onSelected: (method) {
                       chatNotifier.calculateRanking(method);
-                      Navigator.pop(context);
+                      // Sheet stays open to show results
                     },
                   ),
                   const SizedBox(height: 24),
