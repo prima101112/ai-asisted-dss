@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/chat_provider.dart';
-import '../../providers/auth_provider.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/decision_summary_card.dart';
 import '../widgets/result_table.dart';
 import '../widgets/method_selector.dart';
+import '../widgets/app_scaffold.dart';
+import 'history_screen.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -99,162 +100,38 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final chatState = ref.watch(chatProvider);
     final chatNotifier = ref.read(chatProvider.notifier);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('AI Decision Assistant'),
-        centerTitle: true,
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: 'About',
-            onPressed: () => _showAboutDialog(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline),
-            tooltip: 'New Decision',
-            onPressed: () {
-              ref.read(chatProvider.notifier).startNewDecision();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Starting new decision case...')),
-              );
-            },
-          ),
-          Builder(
-            builder: (context) {
-              return IconButton(
-                icon: const Icon(Icons.dashboard_customize_outlined),
-                onPressed: () => Scaffold.of(context).openEndDrawer(),
-              );
-            },
-          ),
-          // User profile and logout
-          PopupMenuButton<String>(
-            icon: CircleAvatar(
-              radius: 16,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              child: ref.watch(currentUserProvider) != null
-                  ? Text(
-                      ref.watch(currentUserProvider)!.initials,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : const Icon(Icons.person, size: 18, color: Colors.white),
-            ),
-            onSelected: (value) async {
-              if (value == 'logout') {
-                final authService = ref.read(authServiceProvider);
-                await authService.signOut();
-              }
-            },
-            itemBuilder: (context) {
-              final user = ref.read(currentUserProvider);
-              return [
-                PopupMenuItem<String>(
-                  enabled: false,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        user?.displayNameOrEmail ?? 'User',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      if (user?.email != null)
-                        Text(
-                          user!.email!,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const PopupMenuDivider(),
-                const PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout, size: 20),
-                      SizedBox(width: 8),
-                      Text('Sign Out'),
-                    ],
-                  ),
-                ),
-              ];
-            },
-          ),
-        ],
-      ),
-      endDrawer: Drawer(
-        width: MediaQuery.of(context).size.width * 0.85,
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Decision Insights',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                if (chatState.session != null) ...[
-                  DecisionSummaryCard(session: chatState.session!),
-                  const SizedBox(height: 24),
-                  if (chatState.session!.alternatives.isNotEmpty &&
-                      chatState.session!.criteria.isNotEmpty) ...[
-                    MethodSelector(
-                      currentMethod: chatState.session!.selectedMethod,
-                      onSelected: (method) =>
-                          chatNotifier.calculateRanking(method),
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  if (chatState.session!.results != null &&
-                      chatState.session!.results!.isNotEmpty) ...[
-                    const Text(
-                      'Rankings',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: ResultTable(
-                          results: chatState.session!.results!,
-                        ),
-                      ),
-                    ),
-                  ] else ...[
-                    const Expanded(
-                      child: Center(
-                        child: Text(
-                          'Gather more info or select a method to see results.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ],
-            ),
-          ),
+    return AppScaffold(
+      title: 'AI Decision Assistant',
+      onNewChat: () {
+        ref.read(chatProvider.notifier).startNewDecision();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Starting new decision case...')),
+        );
+      },
+      onHistoryTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const HistoryScreen()),
+        );
+      },
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.info_outline),
+          tooltip: 'About',
+          onPressed: () => _showAboutDialog(context),
         ),
-      ),
-      body: Column(
+        // Decision Insights panel toggle
+        Builder(
+          builder: (context) {
+            return IconButton(
+              icon: const Icon(Icons.analytics_outlined),
+              tooltip: 'Decision Insights',
+              onPressed: () => _showInsightsPanel(context, chatState, chatNotifier),
+            );
+          },
+        ),
+      ],
+      child: Column(
         children: [
           Expanded(
             child: ListView.builder(
@@ -275,6 +152,101 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           ),
           _buildInputArea(chatNotifier),
         ],
+      ),
+    );
+  }
+
+  void _showInsightsPanel(BuildContext context, ChatState chatState, ChatNotifier chatNotifier) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.outline.withAlpha(100),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Decision Insights',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              if (chatState.session != null) ...[
+                DecisionSummaryCard(session: chatState.session!),
+                const SizedBox(height: 24),
+                if (chatState.session!.alternatives.isNotEmpty &&
+                    chatState.session!.criteria.isNotEmpty) ...[
+                  MethodSelector(
+                    currentMethod: chatState.session!.selectedMethod,
+                    onSelected: (method) {
+                      chatNotifier.calculateRanking(method);
+                      Navigator.pop(context);
+                    },
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                if (chatState.session!.results != null &&
+                    chatState.session!.results!.isNotEmpty) ...[
+                  const Text(
+                    'Rankings',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ResultTable(
+                    results: chatState.session!.results!,
+                  ),
+                ] else ...[
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Text(
+                        'Gather more info or select a method to see results.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                      ),
+                    ),
+                  ),
+                ],
+              ] else ...[
+                Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      'Start a conversation to gather decision data.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
