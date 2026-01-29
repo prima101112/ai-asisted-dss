@@ -10,6 +10,7 @@ import '../widgets/method_selector.dart';
 import '../widgets/app_scaffold.dart';
 import 'history_screen.dart';
 import '../../l10n/app_localizations.dart';
+import '../../logic/dss_engine.dart';
 
 class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
@@ -362,7 +363,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   Widget _buildInputArea(ChatNotifier notifier) {
     final l10n = AppLocalizations.of(context);
-    
+    final chatState = ref.watch(chatProvider);
+    final isReady = chatState.session?.status == 'ready';
+
     return Container(
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -376,52 +379,141 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ],
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
           children: [
-            Expanded(
-              child: TextField(
-                controller: _controller,
-                decoration: InputDecoration(
-                  hintText: l10n.translate('typeMessage'),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Theme.of(
-                    context,
-                  ).colorScheme.surfaceContainerHighest.withAlpha(127),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 10,
+            if (isReady) ...[
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Row(
+                  children: [
+                    Text(
+                      l10n.translate('selectMethod'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _MethodChip(
+                      label: 'SAW',
+                      onTap: () {
+                         final languageCode = ref.read(localeProvider).languageCode;
+                         notifier.sendMessage(
+                           languageCode == 'id' 
+                             ? 'Hitung menggunakan metode SAW' 
+                             : 'Calculate using SAW method', 
+                           languageCode: languageCode
+                         );
+                         notifier.calculateRanking(DSSMethod.saw);
+                         _scrollToBottom();
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _MethodChip(
+                      label: 'WP',
+                      onTap: () {
+                         final languageCode = ref.read(localeProvider).languageCode;
+                         notifier.sendMessage(
+                           languageCode == 'id' 
+                             ? 'Hitung menggunakan metode WP' 
+                             : 'Calculate using WP method',
+                           languageCode: languageCode
+                         );
+                         notifier.calculateRanking(DSSMethod.wp);
+                         _scrollToBottom();
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _MethodChip(
+                      label: 'TOPSIS',
+                      onTap: () {
+                         final languageCode = ref.read(localeProvider).languageCode;
+                         notifier.sendMessage(
+                           languageCode == 'id' 
+                             ? 'Hitung menggunakan metode TOPSIS' 
+                             : 'Calculate using TOPSIS method',
+                           languageCode: languageCode
+                         );
+                         notifier.calculateRanking(DSSMethod.topsis);
+                         _scrollToBottom();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    decoration: InputDecoration(
+                      hintText: l10n.translate('typeMessage'),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest.withAlpha(127),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 10,
+                      ),
+                    ),
+                    onSubmitted: (val) {
+                      final languageCode = ref.read(localeProvider).languageCode;
+                      notifier.sendMessage(val, languageCode: languageCode);
+                      _controller.clear();
+                      _scrollToBottom();
+                    },
                   ),
                 ),
-                onSubmitted: (val) {
-                  final languageCode = ref.read(localeProvider).languageCode;
-                  notifier.sendMessage(val, languageCode: languageCode);
-                  _controller.clear();
-                  _scrollToBottom();
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white),
-                onPressed: () {
-                  final languageCode = ref.read(localeProvider).languageCode;
-                  notifier.sendMessage(_controller.text, languageCode: languageCode);
-                  _controller.clear();
-                  _scrollToBottom();
-                },
-              ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.send, color: Colors.white),
+                    onPressed: () {
+                      final languageCode = ref.read(localeProvider).languageCode;
+                      notifier.sendMessage(_controller.text, languageCode: languageCode);
+                      _controller.clear();
+                      _scrollToBottom();
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MethodChip extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _MethodChip({
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ActionChip(
+      label: Text(label),
+      onPressed: onTap,
+      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+      labelStyle: TextStyle(
+        color: Theme.of(context).colorScheme.onPrimaryContainer,
+        fontWeight: FontWeight.bold,
       ),
     );
   }
