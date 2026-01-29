@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../l10n/app_localizations.dart';
 
 class AppScaffold extends ConsumerWidget {
@@ -20,12 +21,36 @@ class AppScaffold extends ConsumerWidget {
     this.onHistoryTap,
   });
 
+  String _getThemeName(BuildContext context, ThemeMode mode) {
+    final l10n = AppLocalizations.of(context);
+    switch (mode) {
+      case ThemeMode.system:
+        return l10n.translate('systemTheme');
+      case ThemeMode.light:
+        return l10n.translate('lightTheme');
+      case ThemeMode.dark:
+        return l10n.translate('darkTheme');
+    }
+  }
+
+  IconData _getThemeIcon(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return Icons.brightness_auto;
+      case ThemeMode.light:
+        return Icons.wb_sunny;
+      case ThemeMode.dark:
+        return Icons.dark_mode;
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final locale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -98,8 +123,55 @@ class AppScaffold extends ConsumerWidget {
                 },
               ),
 
+              const Spacer(),
+
               const Divider(),
-              
+
+              // Theme Switcher in Drawer
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(
+                      _getThemeIcon(themeMode),
+                      color: colorScheme.onSurfaceVariant,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        l10n.translate('theme'),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                    DropdownButton<ThemeMode>(
+                      value: themeMode,
+                      underline: const SizedBox(),
+                      icon: const Icon(Icons.arrow_drop_down),
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      onChanged: (ThemeMode? newValue) {
+                        if (newValue != null) {
+                          ref.read(themeProvider.notifier).setTheme(newValue);
+                        }
+                      },
+                      items: ThemeMode.values.map((mode) {
+                        return DropdownMenuItem(
+                          value: mode,
+                          child: Text(_getThemeName(context, mode)),
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              ),
+
               // Language Switcher in Drawer
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -162,8 +234,6 @@ class AppScaffold extends ConsumerWidget {
                   ],
                 ),
               ),
-
-              const Spacer(),
 
               // User section at bottom
               const Divider(height: 1),
