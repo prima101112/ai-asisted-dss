@@ -160,7 +160,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   /// Check if we're in initial state (only welcome message, no user interaction yet)
+  /// Also returns false if session has pre-filled data from history
   bool _isInitialState(ChatState state) {
+    // If session has criteria or alternatives, it's from "Use Again" - show chat view
+    if (state.session != null && 
+        (state.session!.criteria.isNotEmpty || state.session!.alternatives.isNotEmpty)) {
+      return false;
+    }
     return state.messages.length == 1 && 
            !state.messages.first.isUser &&
            !state.isLoading;
