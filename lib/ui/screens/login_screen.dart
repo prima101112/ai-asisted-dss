@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/locale_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../l10n/app_localizations.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
@@ -75,6 +76,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     }
   }
 
+  void _cycleTheme() {
+    final current = ref.read(themeProvider);
+    final next = ThemeMode.values[(current.index + 1) % ThemeMode.values.length];
+    ref.read(themeProvider.notifier).setTheme(next);
+  }
+
+  IconData _getThemeIcon(ThemeMode mode) {
+    switch (mode) {
+      case ThemeMode.system:
+        return Icons.brightness_auto;
+      case ThemeMode.light:
+        return Icons.wb_sunny;
+      case ThemeMode.dark:
+        return Icons.dark_mode;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -82,6 +100,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     final isDark = theme.brightness == Brightness.dark;
     final l10n = AppLocalizations.of(context);
     final locale = ref.watch(localeProvider);
+    final themeMode = ref.watch(themeProvider);
 
     return Scaffold(
       body: Container(
@@ -105,35 +124,51 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         child: SafeArea(
           child: Stack(
             children: [
-              // Language Switcher
+              // Settings Controls (Theme & Language)
               Positioned(
                 top: 16,
                 right: 16,
-                child: FilledButton.tonal(
-                  onPressed: () {
-                    ref.read(localeProvider.notifier).toggleLocale();
-                  },
-                  style: FilledButton.styleFrom(
-                    shape: const StadiumBorder(),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Theme Switcher
+                    FilledButton.tonal(
+                      onPressed: _cycleTheme,
+                      style: FilledButton.styleFrom(
+                        shape: const CircleBorder(),
+                        padding: const EdgeInsets.all(12),
+                      ),
+                      child: Icon(_getThemeIcon(themeMode), size: 18),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        locale.languageCode == 'en' ? '🇺🇸' : '🇮🇩',
-                        style: const TextStyle(fontSize: 18),
+                    const SizedBox(width: 8),
+                    // Language Switcher
+                    FilledButton.tonal(
+                      onPressed: () {
+                        ref.read(localeProvider.notifier).toggleLocale();
+                      },
+                      style: FilledButton.styleFrom(
+                        shape: const StadiumBorder(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        locale.languageCode == 'en' ? 'EN' : 'ID',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            locale.languageCode == 'en' ? '🇺🇸' : '🇮🇩',
+                            style: const TextStyle(fontSize: 18),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            locale.languageCode == 'en' ? 'EN' : 'ID',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
               Center(
