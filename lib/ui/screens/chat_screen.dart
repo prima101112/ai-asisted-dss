@@ -261,8 +261,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           final currentState = ref.watch(chatProvider);
           final notifier = ref.read(chatProvider.notifier);
           
+          // Auto-expand to full height when results are available
+          final hasResults = currentState.session?.results != null &&
+              currentState.session!.results!.isNotEmpty;
+          
           return DraggableScrollableSheet(
-            initialChildSize: 0.6,
+            initialChildSize: hasResults ? 0.9 : 0.6,
             minChildSize: 0.3,
             maxChildSize: 0.9,
             expand: false,

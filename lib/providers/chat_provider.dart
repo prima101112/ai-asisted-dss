@@ -25,18 +25,26 @@ class ChatState {
   final List<ChatMessage> messages;
   final DecisionSession? session;
   final bool isLoading;
+  final bool isDirty; // Track if user made any changes
 
-  ChatState({required this.messages, this.session, this.isLoading = false});
+  ChatState({
+    required this.messages,
+    this.session,
+    this.isLoading = false,
+    this.isDirty = false,
+  });
 
   ChatState copyWith({
     List<ChatMessage>? messages,
     DecisionSession? session,
     bool? isLoading,
+    bool? isDirty,
   }) {
     return ChatState(
       messages: messages ?? this.messages,
       session: session ?? this.session,
       isLoading: isLoading ?? this.isLoading,
+      isDirty: isDirty ?? this.isDirty,
     );
   }
 }
@@ -122,6 +130,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     state = state.copyWith(
       messages: [...state.messages, userMessage],
       isLoading: true,
+      isDirty: true, // User interacted, mark as dirty
     );
 
     try {
@@ -230,7 +239,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
         debugPrint("Alternatives count: ${session.alternatives.length}");
         debugPrint("Raw JSON: ${session.toJson()}");
 
-        state = state.copyWith(session: session);
+        state = state.copyWith(session: session, isDirty: true);
         _firebaseService.saveSession(session);
       } catch (e) {
         debugPrint("Mapping error: $e");
@@ -258,7 +267,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
       status: 'calculated',
     );
 
-    state = state.copyWith(session: updatedSession);
+    state = state.copyWith(session: updatedSession, isDirty: true);
     _firebaseService.saveSession(updatedSession);
   }
 }
