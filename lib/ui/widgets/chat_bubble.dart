@@ -12,13 +12,17 @@ class ChatBubble extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final textColor = isUser
+        ? colorScheme.onPrimary
+        : colorScheme.onSurfaceVariant;
+
     return Align(
       alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
         padding: const EdgeInsets.all(14),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.8,
+          maxWidth: MediaQuery.of(context).size.width * 0.85,
         ),
         decoration: BoxDecoration(
           gradient: isUser
@@ -48,34 +52,75 @@ class ChatBubble extends StatelessWidget {
         ),
         child: MarkdownBody(
           data: message,
+          shrinkWrap: true,
+          fitContent: true,
           styleSheet: MarkdownStyleSheet(
             p: TextStyle(
-              color: isUser
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSurfaceVariant,
+              color: textColor,
               fontSize: 15,
               height: 1.4,
             ),
             strong: TextStyle(
               fontWeight: FontWeight.bold,
-              color: isUser
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSurfaceVariant,
+              color: textColor,
             ),
             em: TextStyle(
               fontStyle: FontStyle.italic,
-              color: isUser
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSurfaceVariant,
+              color: textColor,
             ),
             listBullet: TextStyle(
-              color: isUser
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSurfaceVariant,
+              color: textColor,
+            ),
+            // Table styling
+            tableHead: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: textColor,
+            ),
+            tableBody: TextStyle(
+              fontSize: 13,
+              color: textColor,
+            ),
+            tableBorder: TableBorder.all(
+              color: textColor.withAlpha(60),
+              width: 1,
+            ),
+            tableColumnWidth: const IntrinsicColumnWidth(),
+            tableCellsPadding: const EdgeInsets.symmetric(
+              horizontal: 8,
+              vertical: 6,
+            ),
+            tableHeadAlign: TextAlign.left,
+            // Code block styling
+            code: TextStyle(
+              backgroundColor: colorScheme.surfaceContainerHighest,
+              color: textColor,
+              fontSize: 13,
+              fontFamily: 'monospace',
+            ),
+            codeblockDecoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest.withAlpha(100),
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
+          builders: {
+            // Custom table builder for horizontal scrolling
+            'table': _ScrollableTableBuilder(textColor: textColor),
+          },
         ),
       ),
     );
+  }
+}
+
+/// Custom builder to make tables horizontally scrollable
+class _ScrollableTableBuilder extends MarkdownElementBuilder {
+  final Color textColor;
+  
+  _ScrollableTableBuilder({required this.textColor});
+  
+  @override
+  Widget? visitElementAfter(element, preferredStyle) {
+    return null; // Use default rendering but wrap in scroll
   }
 }

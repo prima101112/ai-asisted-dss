@@ -223,7 +223,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                       'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg',
                                       height: 24,
                                       width: 24,
-                                      errorBuilder: (_, __, _) => const Icon(
+                                      errorBuilder: (_, _, _) => const Icon(
                                         Icons.g_mobiledata,
                                         size: 28,
                                         color: Colors.red,
