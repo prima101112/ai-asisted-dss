@@ -173,32 +173,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final firstName = user?.displayName?.split(' ').first ?? 'User';
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 40),
+          const SizedBox(height: 24),
           // Greeting
           Text(
             'Hi $firstName 👋',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             'What decision do you\nneed help with?',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
               height: 1.2,
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 24),
           
           // Suggestion chips
           Wrap(
-            spacing: 10,
-            runSpacing: 10,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _SuggestionChip(
                 emoji: '🎯',
@@ -419,12 +419,12 @@ class _SuggestionChip extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: colorScheme.surfaceContainerHighest.withAlpha(150),
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: colorScheme.outline.withAlpha(50),
             ),
@@ -434,13 +434,13 @@ class _SuggestionChip extends StatelessWidget {
             children: [
               Text(
                 emoji,
-                style: const TextStyle(fontSize: 18),
+                style: const TextStyle(fontSize: 14),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w500,
                   color: colorScheme.onSurface,
                 ),
