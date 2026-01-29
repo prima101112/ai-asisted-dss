@@ -5,6 +5,7 @@ import '../../models/decision_session.dart';
 import '../../providers/chat_provider.dart';
 import '../widgets/app_scaffold.dart';
 import 'chat_screen.dart';
+import 'history_detail_screen.dart';
 
 class HistoryScreen extends ConsumerWidget {
   const HistoryScreen({super.key});
@@ -168,7 +169,12 @@ class _HistoryItemCard extends StatelessWidget {
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => _showDetailDialog(context),
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => HistoryDetailScreen(session: session),
+          ),
+        ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -296,158 +302,6 @@ class _HistoryItemCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showDetailDialog(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: colorScheme.outline.withAlpha(100),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              Text(
-                session.title,
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Criteria section
-              Text(
-                'Criteria (${session.criteria.length})',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...session.criteria.map((c) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  children: [
-                    Icon(
-                      c.type.name == 'benefit' ? Icons.trending_up : Icons.trending_down,
-                      size: 16,
-                      color: c.type.name == 'benefit' ? Colors.green : Colors.red,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(c.name)),
-                    Text(
-                      'Weight: ${c.weight}',
-                      style: TextStyle(color: colorScheme.onSurfaceVariant),
-                    ),
-                  ],
-                ),
-              )),
-
-              const SizedBox(height: 16),
-
-              // Alternatives section
-              Text(
-                'Alternatives (${session.alternatives.length})',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ...session.alternatives.map((a) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  children: [
-                    const Icon(Icons.circle, size: 8),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(a.name)),
-                  ],
-                ),
-              )),
-
-              // Results section
-              if (session.results != null && session.results!.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  'Results',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...session.results!.map((r) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: r.rank == 1
-                            ? Colors.amber
-                            : colorScheme.surfaceContainerHighest,
-                        child: Text(
-                          '${r.rank}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: r.rank == 1 ? Colors.black : colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(r.alternativeName)),
-                      Text(
-                        r.score.toStringAsFixed(4),
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: colorScheme.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                )),
-              ],
-
-              const SizedBox(height: 24),
-
-              // Use Again button
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    onUseAgain();
-                  },
-                  icon: const Icon(Icons.replay),
-                  label: const Text('Use This Data Again'),
                 ),
               ),
             ],
