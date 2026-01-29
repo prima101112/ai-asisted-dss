@@ -12,13 +12,16 @@ Created with ❤️ by:
 
 ## Features
 
-- **Guided AI Interview**: Uses DeepSeek AI to walk you through defining a decision, criteria, and alternatives step-by-step.
-- **Multiple Ranking Methods**:
+- **🤖 Guided AI Interview**: Uses DeepSeek AI to walk you through defining a decision, criteria, and alternatives step-by-step.
+- **🌍 Multi-Language Support**: Fully localized in **English** and **Indonesian**. The AI also adapts its language based on your preference.
+- **🌗 Dark Mode**: Seamless support for Light, Dark, and System themes.
+- **📊 Multiple Ranking Methods**:
   - **SAW** (Simple Additive Weighting)
   - **WP** (Weighted Product)
   - **TOPSIS**
-- **Cloud Persistence**: Integrated with Firebase Firestore to save and sync your decision cases.
-- **Modern UI**: Sleek Light Blue & Light Orange theme with Markdown support in chat.
+- **📜 Decision History**: Save your sessions automatically. Resume previous conversations or **reuse data** (criteria/alternatives) for new calculations.
+- **⚡ Smart Shortcuts**: Quick-access chips to trigger calculations (SAW/WP/TOPSIS) instantly when data is ready.
+- **☁️ Cloud Persistence**: Integrated with Firebase Firestore to sync your decision cases securely.
 
 ---
 
@@ -66,6 +69,8 @@ flutter run
 - **Logic**: All DSS mathematical calculations are executed locally in `lib/logic/dss_engine.dart` (not by the AI).
 - **AI**: DeepSeek handles the conversational data extraction in `lib/services/deepseek_service.dart`.
 - **State Management**: Using `flutter_riverpod` for clean and reactive state.
+- **Localization**: Uses `flutter_localizations` with `AppLocalizations` for strict typed translation keys.
+- **Theme**: Managed via `ThemeProvider` with persistence using `shared_preferences`.
 
 ---
 
