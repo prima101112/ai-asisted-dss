@@ -123,7 +123,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     );
   }
 
-  Future<void> sendMessage(String text) async {
+  Future<void> sendMessage(String text, {String? languageCode}) async {
     if (text.trim().isEmpty) return;
 
     final userMessage = ChatMessage(content: text, isUser: true);
@@ -143,7 +143,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
           )
           .toList();
 
-      final aiResponse = await _aiService.getChatResponse(history);
+      final aiResponse = await _aiService.getChatResponse(history, languageCode: languageCode);
 
       final assistantMessage = ChatMessage(content: aiResponse, isUser: false);
       state = state.copyWith(

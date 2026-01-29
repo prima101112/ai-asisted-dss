@@ -59,10 +59,19 @@ You MUST follow this exact sequence and ask only ONE thing at a time:
     }
   }
 
-  Future<String> getChatResponse(List<Map<String, String>> messages) async {
+  Future<String> getChatResponse(List<Map<String, String>> messages, {String? languageCode}) async {
     // Prepend the personality/guide prompt for normal chat
+    String systemPrompt = chatSystemPrompt;
+    
+    // Append language instruction
+    if (languageCode == 'id') {
+      systemPrompt += "\n\nIMPORTANT: You MUST reply in INDONESIAN language.";
+    } else {
+      systemPrompt += "\n\nIMPORTANT: You MUST reply in ENGLISH language.";
+    }
+
     final List<Map<String, String>> fullMessages = [
-      {'role': 'system', 'content': chatSystemPrompt},
+      {'role': 'system', 'content': systemPrompt},
       ...messages,
     ];
     return _makeRawRequest(fullMessages);

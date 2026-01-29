@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/chat_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/locale_provider.dart';
 import '../widgets/chat_bubble.dart';
 import '../widgets/decision_summary_card.dart';
 import '../widgets/result_table.dart';
@@ -247,7 +248,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   }
 
   void _sendSuggestion(ChatNotifier notifier, String message) {
-    notifier.sendMessage(message);
+    final languageCode = ref.read(localeProvider).languageCode;
+    notifier.sendMessage(message, languageCode: languageCode);
     _scrollToBottom();
   }
 
@@ -395,7 +397,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                 ),
                 onSubmitted: (val) {
-                  notifier.sendMessage(val);
+                  final languageCode = ref.read(localeProvider).languageCode;
+                  notifier.sendMessage(val, languageCode: languageCode);
                   _controller.clear();
                   _scrollToBottom();
                 },
@@ -410,7 +413,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               child: IconButton(
                 icon: const Icon(Icons.send, color: Colors.white),
                 onPressed: () {
-                  notifier.sendMessage(_controller.text);
+                  final languageCode = ref.read(localeProvider).languageCode;
+                  notifier.sendMessage(_controller.text, languageCode: languageCode);
                   _controller.clear();
                   _scrollToBottom();
                 },
