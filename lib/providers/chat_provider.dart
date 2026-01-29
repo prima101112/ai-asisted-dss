@@ -67,6 +67,33 @@ class ChatNotifier extends StateNotifier<ChatState> {
     _initSession();
   }
 
+  /// Start a new decision using data from an existing history session
+  /// Creates a NEW session with NEW id and timestamp, copies data from history
+  void startFromHistory(DecisionSession historySession) {
+    final newSession = DecisionSession(
+      id: const Uuid().v4(), // New unique ID
+      title: historySession.title,
+      criteria: List.from(historySession.criteria), // Copy criteria
+      alternatives: List.from(historySession.alternatives), // Copy alternatives
+      createdAt: DateTime.now(), // New timestamp
+      status: 'gathering', // Reset status
+      // Don't copy results - user may want to recalculate
+    );
+
+    state = ChatState(
+      session: newSession,
+      messages: [
+        ChatMessage(
+          content:
+              "Welcome back! I've loaded your previous decision data for '${historySession.title}'. "
+              "You have ${historySession.criteria.length} criteria and ${historySession.alternatives.length} alternatives ready. "
+              "Would you like to make any changes or proceed to calculate the results?",
+          isUser: false,
+        ),
+      ],
+    );
+  }
+
   void _initSession() {
     final session = DecisionSession(
       id: const Uuid().v4(),
