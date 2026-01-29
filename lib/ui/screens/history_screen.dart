@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/decision_session.dart';
 import '../../providers/chat_provider.dart';
-import '../widgets/app_scaffold.dart';
 import 'chat_screen.dart';
 import 'history_detail_screen.dart';
 
@@ -14,20 +13,16 @@ class HistoryScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final firebaseService = ref.watch(firebaseServiceProvider);
 
-    return AppScaffold(
-      title: 'Decision History',
-      onNewChat: () {
-        ref.read(chatProvider.notifier).startNewDecision();
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const ChatScreen()),
-        );
-      },
-      onHistoryTap: () {
-        // Already on history screen
-        Navigator.pop(context);
-      },
-      child: StreamBuilder<List<DecisionSession>>(
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text('Decision History'),
+        centerTitle: true,
+      ),
+      body: StreamBuilder<List<DecisionSession>>(
         stream: firebaseService.getSessions(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
