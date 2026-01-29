@@ -255,90 +255,97 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.3,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.outline.withAlpha(100),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Decision Insights',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              if (chatState.session != null) ...[
-                DecisionSummaryCard(session: chatState.session!),
-                const SizedBox(height: 24),
-                if (chatState.session!.alternatives.isNotEmpty &&
-                    chatState.session!.criteria.isNotEmpty) ...[
-                  MethodSelector(
-                    currentMethod: chatState.session!.selectedMethod,
-                    onSelected: (method) {
-                      chatNotifier.calculateRanking(method);
-                      // Sheet stays open to show results
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                ],
-                if (chatState.session!.results != null &&
-                    chatState.session!.results!.isNotEmpty) ...[
-                  const Text(
-                    'Rankings',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ResultTable(
-                    results: chatState.session!.results!,
-                  ),
-                ] else ...[
+      builder: (sheetContext) => Consumer(
+        builder: (context, ref, _) {
+          // Watch the provider to rebuild when state changes
+          final currentState = ref.watch(chatProvider);
+          final notifier = ref.read(chatProvider.notifier);
+          
+          return DraggableScrollableSheet(
+            initialChildSize: 0.6,
+            minChildSize: 0.3,
+            maxChildSize: 0.9,
+            expand: false,
+            builder: (context, scrollController) => SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle
                   Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Text(
-                        'Gather more info or select a method to see results.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.outline.withAlpha(100),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
-                ],
-              ] else ...[
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      'Start a conversation to gather decision data.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Decision Insights',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ],
-            ],
-          ),
-        ),
+                  const SizedBox(height: 20),
+                  if (currentState.session != null) ...[
+                    DecisionSummaryCard(session: currentState.session!),
+                    const SizedBox(height: 24),
+                    if (currentState.session!.alternatives.isNotEmpty &&
+                        currentState.session!.criteria.isNotEmpty) ...[
+                      MethodSelector(
+                        currentMethod: currentState.session!.selectedMethod,
+                        onSelected: (method) {
+                          notifier.calculateRanking(method);
+                        },
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                    if (currentState.session!.results != null &&
+                        currentState.session!.results!.isNotEmpty) ...[
+                      const Text(
+                        'Rankings',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ResultTable(
+                        results: currentState.session!.results!,
+                      ),
+                    ] else ...[
+                      Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            'Gather more info or select a method to see results.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ] else ...[
+                    Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'Start a conversation to gather decision data.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
