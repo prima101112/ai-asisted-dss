@@ -293,6 +293,9 @@ class ChatNotifier extends StateNotifier<ChatState> {
           title: newTitle,
           criteria: newCriteria,
           alternatives: newAlternatives,
+          selectedMethod: currentSession.selectedMethod,
+          results: currentSession.results,
+          calculationMatrices: currentSession.calculationMatrices,
           createdAt: currentSession.createdAt,
           status: data['status'] ?? currentSession.status,
         );

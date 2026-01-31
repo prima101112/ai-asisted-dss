@@ -34,6 +34,8 @@ You MUST follow this exact sequence and ask only ONE thing at a time:
 - Once you have enough data for a step, move to the next.
 - If the user provides multiple pieces of info, acknowledge and ask for the next missing piece.
 - **IMPORTANT**: When the user asks for results or to perform a calculation, summarize the result with a **deep human-language analysis**.
+- **DO NOT attempt to calculate the scores or ranks yourself**. Use ONLY the **Calculation Results (Rankings)** provided in the context.
+- Your job is to **EXPLAIN** the ranking logic (how criteria influenced the result), not to perform the arithmetic.
 - Focus on the **Top 3 choices** (or all if fewer than 3).
 - Explain **WHY** they are ranked as such based on their performance in the most important criteria.
 - Use a professional yet helpful tone.
@@ -162,15 +164,15 @@ Rules:
     }
 
     if (session.results != null && session.results!.isNotEmpty) {
-      prompt += "Calculation Results (Rankings):\n";
+      prompt += "\nFINAL CALCULATION RESULTS (Use these for your analysis):\n";
       for (var r in session.results!) {
         prompt +=
-            "- Rank #${r.rank}: ${r.alternativeName} (Score: ${r.score.toStringAsFixed(4)})\n";
+            "- Rank #${r.rank}: ${r.alternativeName} (Total Final Score: ${r.score.toStringAsFixed(4)})\n";
       }
     }
 
     prompt +=
-        "\nNote: USE the data above as context. If the user asks for analysis, explain the top winners based on how they scored in the criteria mentioned above.";
+        "\nNote: ALWAYS prioritize the 'FINAL CALCULATION RESULTS' above for your analysis. Do not calculate manually. Explain the winners based on how their individual criteria scores (listed under Alternatives) align with the criterion weights.";
     return prompt;
   }
 }
