@@ -3,12 +3,23 @@ import '../models/criterion.dart';
 import '../models/alternative.dart';
 import '../models/decision_session.dart';
 
+class CalculationResult {
+  final List<RankingResult> rankings;
+  final Map<String, dynamic> matrices;
+
+  CalculationResult({required this.rankings, required this.matrices});
+}
+
 class DSSEngine {
-  static List<RankingResult> calculate(
+  static CalculationResult calculate(
     List<Criterion> criteria,
     List<Alternative> alternatives,
     DSSMethod method,
   ) {
+    if (alternatives.isEmpty || criteria.isEmpty) {
+      return CalculationResult(rankings: [], matrices: {});
+    }
+
     switch (method) {
       case DSSMethod.saw:
         return _calculateSAW(criteria, alternatives);
@@ -19,12 +30,12 @@ class DSSEngine {
     }
   }
 
-  static List<RankingResult> _calculateSAW(
+  static CalculationResult _calculateSAW(
     List<Criterion> criteria,
     List<Alternative> alternatives,
   ) {
     // 1. Normalization
-    Map<String, Map<String, double>> normalized = {};
+    Map<String, Map<String, dynamic>> normalized = {};
     for (var criterion in criteria) {
       double maxVal = alternatives
           .map((e) => e.scores[criterion.id] ?? 0)
@@ -44,12 +55,16 @@ class DSSEngine {
       }
     }
 
-    // 2. Weighted Sum
+    // 2. Weighted Sum Matrix
+    Map<String, Map<String, dynamic>> weighted = {};
     List<RankingResult> results = alternatives.map((alt) {
       double totalScore = 0;
+      weighted[alt.id] ??= {};
       for (var criterion in criteria) {
-        totalScore +=
-            (normalized[alt.id]![criterion.id] ?? 0) * criterion.weight;
+        double normVal = normalized[alt.id]![criterion.id] as double;
+        double weightedVal = normVal * criterion.weight;
+        weighted[alt.id]![criterion.id] = weightedVal;
+        totalScore += weightedVal;
       }
       return RankingResult(
         alternativeId: alt.id,
@@ -59,21 +74,30 @@ class DSSEngine {
       );
     }).toList();
 
-    return _rankResults(results);
+    return CalculationResult(
+      rankings: _rankResults(results),
+      matrices: {
+        "Normalization Matrix": normalized,
+        "Weighted Matrix": weighted,
+      },
+    );
   }
 
-  static List<RankingResult> _calculateWP(
+  static CalculationResult _calculateWP(
     List<Criterion> criteria,
     List<Alternative> alternatives,
   ) {
     double totalWeight = criteria.map((e) => e.weight).reduce((a, b) => a + b);
 
-    // Calculate S value for each alternative
+    // 1. Normalized Weights & S values
+    Map<String, Map<String, dynamic>> weightMatrix = {};
     List<double> sValues = alternatives.map((alt) {
       double s = 1.0;
+      weightMatrix[alt.id] ??= {};
       for (var criterion in criteria) {
         double w = criterion.weight / totalWeight;
         if (criterion.type == CriterionType.cost) w = -w;
+        weightMatrix[alt.id]![criterion.id] = w;
         s *= pow(alt.scores[criterion.id] ?? 1e-9, w);
       }
       return s;
@@ -93,15 +117,24 @@ class DSSEngine {
       );
     }
 
-    return _rankResults(results);
+    return CalculationResult(
+      rankings: _rankResults(results),
+      matrices: {
+        "Weight Normalization": weightMatrix,
+        "S-Values": {
+          for (int i = 0; i < alternatives.length; i++)
+            alternatives[i].name: sValues[i],
+        },
+      },
+    );
   }
 
-  static List<RankingResult> _calculateTOPSIS(
+  static CalculationResult _calculateTOPSIS(
     List<Criterion> criteria,
     List<Alternative> alternatives,
   ) {
     // 1. Normalize
-    Map<String, Map<String, double>> normalized = {};
+    Map<String, Map<String, dynamic>> normalized = {};
     for (var criterion in criteria) {
       double divider = sqrt(
         alternatives
@@ -123,7 +156,7 @@ class DSSEngine {
 
     for (var criterion in criteria) {
       var values = alternatives
-          .map((alt) => normalized[alt.id]![criterion.id]!)
+          .map((alt) => normalized[alt.id]![criterion.id]! as double)
           .toList();
       if (criterion.type == CriterionType.benefit) {
         ideal[criterion.id] = values.reduce(max);
@@ -138,12 +171,20 @@ class DSSEngine {
     List<RankingResult> results = alternatives.map((alt) {
       double dPlus = sqrt(
         criteria
-            .map((c) => pow(normalized[alt.id]![c.id]! - ideal[c.id]!, 2))
+            .map(
+              (c) =>
+                  pow((normalized[alt.id]![c.id]! as double) - ideal[c.id]!, 2),
+            )
             .reduce((a, b) => a + b),
       );
       double dMinus = sqrt(
         criteria
-            .map((c) => pow(normalized[alt.id]![c.id]! - antiIdeal[c.id]!, 2))
+            .map(
+              (c) => pow(
+                (normalized[alt.id]![c.id]! as double) - antiIdeal[c.id]!,
+                2,
+              ),
+            )
             .reduce((a, b) => a + b),
       );
 
@@ -156,7 +197,14 @@ class DSSEngine {
       );
     }).toList();
 
-    return _rankResults(results);
+    return CalculationResult(
+      rankings: _rankResults(results),
+      matrices: {
+        "Weighted Normalized Matrix": normalized,
+        "Ideal Solutions": ideal,
+        "Anti-Ideal Solutions": antiIdeal,
+      },
+    );
   }
 
   static List<RankingResult> _rankResults(List<RankingResult> results) {

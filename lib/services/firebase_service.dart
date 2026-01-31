@@ -66,4 +66,10 @@ class FirebaseService {
     }
     return null;
   }
+
+  Future<void> deleteSession(String id) async {
+    final sessions = _sessionsCollection();
+    if (sessions == null) return;
+    await sessions.doc(id).delete();
+  }
 }
