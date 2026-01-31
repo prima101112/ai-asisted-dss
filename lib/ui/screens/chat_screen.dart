@@ -7,6 +7,7 @@ import '../widgets/chat_bubble.dart';
 import '../widgets/decision_summary_card.dart';
 import '../widgets/result_table.dart';
 import '../widgets/method_selector.dart';
+import '../widgets/matrix_table.dart';
 import '../widgets/app_scaffold.dart';
 import 'history_screen.dart';
 import '../../l10n/app_localizations.dart';
@@ -110,7 +111,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       title: l10n.translate('appTitle'),
       onNewChat: () {
         final languageCode = ref.read(localeProvider).languageCode;
-        ref.read(chatProvider.notifier).startNewDecision(languageCode: languageCode);
+        ref
+            .read(chatProvider.notifier)
+            .startNewDecision(languageCode: languageCode);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Starting new decision case...')),
         );
@@ -133,7 +136,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             return IconButton(
               icon: const Icon(Icons.analytics_outlined),
               tooltip: l10n.translate('decisionInsights'),
-              onPressed: () => _showInsightsPanel(context, chatState, chatNotifier),
+              onPressed: () =>
+                  _showInsightsPanel(context, chatState, chatNotifier),
             );
           },
         ),
@@ -146,7 +150,8 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 : ListView.builder(
                     controller: _scrollController,
                     itemCount:
-                        chatState.messages.length + (chatState.isLoading ? 1 : 0),
+                        chatState.messages.length +
+                        (chatState.isLoading ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == chatState.messages.length) {
                         return const Padding(
@@ -155,7 +160,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         );
                       }
                       final msg = chatState.messages[index];
-                      return ChatBubble(message: msg.content, isUser: msg.isUser);
+                      return ChatBubble(
+                        message: msg.content,
+                        isUser: msg.isUser,
+                      );
                     },
                   ),
           ),
@@ -169,13 +177,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   /// Also returns false if session has pre-filled data from history
   bool _isInitialState(ChatState state) {
     // If session has criteria or alternatives, it's from "Use Again" - show chat view
-    if (state.session != null && 
-        (state.session!.criteria.isNotEmpty || state.session!.alternatives.isNotEmpty)) {
+    if (state.session != null &&
+        (state.session!.criteria.isNotEmpty ||
+            state.session!.alternatives.isNotEmpty)) {
       return false;
     }
-    return state.messages.length == 1 && 
-           !state.messages.first.isUser &&
-           !state.isLoading;
+    return state.messages.length == 1 &&
+        !state.messages.first.isUser &&
+        !state.isLoading;
   }
 
   /// Build Gemini-style home view with greeting and suggestions
@@ -207,7 +216,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          
+
           // Suggestion chips
           Wrap(
             spacing: 8,
@@ -216,32 +225,48 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               _SuggestionChip(
                 emoji: '🎯',
                 label: l10n.translate('chooseBestOption'),
-                onTap: () => _sendSuggestion(notifier, 'I want to compare several options and find the best one'),
+                onTap: () => _sendSuggestion(
+                  notifier,
+                  'I want to compare several options and find the best one',
+                ),
               ),
               _SuggestionChip(
                 emoji: '💼',
                 label: l10n.translate('jobCareer'),
-                onTap: () => _sendSuggestion(notifier, 'I need help deciding between job opportunities'),
+                onTap: () => _sendSuggestion(
+                  notifier,
+                  'I need help deciding between job opportunities',
+                ),
               ),
               _SuggestionChip(
                 emoji: '🛒',
                 label: l10n.translate('purchaseDecision'),
-                onTap: () => _sendSuggestion(notifier, 'I want to compare products before making a purchase'),
+                onTap: () => _sendSuggestion(
+                  notifier,
+                  'I want to compare products before making a purchase',
+                ),
               ),
               _SuggestionChip(
                 emoji: '🏠',
                 label: l10n.translate('locationPlace'),
-                onTap: () => _sendSuggestion(notifier, 'I need help choosing between different locations'),
+                onTap: () => _sendSuggestion(
+                  notifier,
+                  'I need help choosing between different locations',
+                ),
               ),
               _SuggestionChip(
                 emoji: '📊',
                 label: l10n.translate('businessStrategy'),
-                onTap: () => _sendSuggestion(notifier, 'I want to evaluate business strategies or investments'),
+                onTap: () => _sendSuggestion(
+                  notifier,
+                  'I want to evaluate business strategies or investments',
+                ),
               ),
               _SuggestionChip(
                 emoji: '✨',
                 label: l10n.translate('somethingElse'),
-                onTap: () => _sendSuggestion(notifier, 'I have a decision to make'),
+                onTap: () =>
+                    _sendSuggestion(notifier, 'I have a decision to make'),
               ),
             ],
           ),
@@ -256,7 +281,11 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     _scrollToBottom();
   }
 
-  void _showInsightsPanel(BuildContext context, ChatState chatState, ChatNotifier chatNotifier) {
+  void _showInsightsPanel(
+    BuildContext context,
+    ChatState chatState,
+    ChatNotifier chatNotifier,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -269,11 +298,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           final currentState = ref.watch(chatProvider);
           final notifier = ref.read(chatProvider.notifier);
           final l10n = AppLocalizations.of(context);
-          
+
           // Auto-expand to full height when results are available
-          final hasResults = currentState.session?.results != null &&
+          final hasResults =
+              currentState.session?.results != null &&
               currentState.session!.results!.isNotEmpty;
-          
+
           return DraggableScrollableSheet(
             initialChildSize: hasResults ? 0.9 : 0.6,
             minChildSize: 0.3,
@@ -291,7 +321,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.outline.withAlpha(100),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outline.withAlpha(100),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -327,9 +359,34 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ResultTable(
-                        results: currentState.session!.results!,
-                      ),
+                      ResultTable(results: currentState.session!.results!),
+                      const SizedBox(height: 24),
+                      if (currentState.session!.calculationMatrices !=
+                          null) ...[
+                        Text(
+                          l10n.translate('calculationSteps'),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        ...currentState.session!.calculationMatrices!.entries
+                            .map((entry) {
+                              return MatrixTable(
+                                title: entry.key,
+                                data: entry.value,
+                                criteriaNames: currentState.session!.criteria
+                                    .map((c) => c.name)
+                                    .toList(),
+                                alternativeNames: {
+                                  for (var alt
+                                      in currentState.session!.alternatives)
+                                    alt.id: alt.name,
+                                },
+                              );
+                            }),
+                      ],
                     ] else ...[
                       Center(
                         child: Padding(
@@ -337,7 +394,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           child: Text(
                             l10n.translate('gatherMoreInfo'),
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
                           ),
                         ),
                       ),
@@ -349,7 +408,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         child: Text(
                           l10n.translate('startConversation'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(color: Theme.of(context).colorScheme.outline),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.outline,
+                          ),
                         ),
                       ),
                     ),
@@ -404,45 +465,51 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     _MethodChip(
                       label: 'SAW',
                       onTap: () {
-                         final languageCode = ref.read(localeProvider).languageCode;
-                         notifier.sendMessage(
-                           languageCode == 'id' 
-                             ? 'Hitung menggunakan metode SAW' 
-                             : 'Calculate using SAW method', 
-                           languageCode: languageCode
-                         );
-                         notifier.calculateRanking(DSSMethod.saw);
-                         _scrollToBottom();
+                        final languageCode = ref
+                            .read(localeProvider)
+                            .languageCode;
+                        notifier.calculateRanking(DSSMethod.saw);
+                        notifier.sendMessage(
+                          languageCode == 'id'
+                              ? 'Analisis hasil perhitungan menggunakan metode SAW ini secara mendalam.'
+                              : 'Analyze these SAW calculation results in depth.',
+                          languageCode: languageCode,
+                        );
+                        _scrollToBottom();
                       },
                     ),
                     const SizedBox(width: 8),
                     _MethodChip(
                       label: 'WP',
                       onTap: () {
-                         final languageCode = ref.read(localeProvider).languageCode;
-                         notifier.sendMessage(
-                           languageCode == 'id' 
-                             ? 'Hitung menggunakan metode WP' 
-                             : 'Calculate using WP method',
-                           languageCode: languageCode
-                         );
-                         notifier.calculateRanking(DSSMethod.wp);
-                         _scrollToBottom();
+                        final languageCode = ref
+                            .read(localeProvider)
+                            .languageCode;
+                        notifier.calculateRanking(DSSMethod.wp);
+                        notifier.sendMessage(
+                          languageCode == 'id'
+                              ? 'Analisis hasil perhitungan menggunakan metode WP ini secara mendalam.'
+                              : 'Analyze these WP calculation results in depth.',
+                          languageCode: languageCode,
+                        );
+                        _scrollToBottom();
                       },
                     ),
                     const SizedBox(width: 8),
                     _MethodChip(
                       label: 'TOPSIS',
                       onTap: () {
-                         final languageCode = ref.read(localeProvider).languageCode;
-                         notifier.sendMessage(
-                           languageCode == 'id' 
-                             ? 'Hitung menggunakan metode TOPSIS' 
-                             : 'Calculate using TOPSIS method',
-                           languageCode: languageCode
-                         );
-                         notifier.calculateRanking(DSSMethod.topsis);
-                         _scrollToBottom();
+                        final languageCode = ref
+                            .read(localeProvider)
+                            .languageCode;
+                        notifier.calculateRanking(DSSMethod.topsis);
+                        notifier.sendMessage(
+                          languageCode == 'id'
+                              ? 'Analisis hasil perhitungan menggunakan metode TOPSIS ini secara mendalam.'
+                              : 'Analyze these TOPSIS calculation results in depth.',
+                          languageCode: languageCode,
+                        );
+                        _scrollToBottom();
                       },
                     ),
                   ],
@@ -470,7 +537,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       ),
                     ),
                     onSubmitted: (val) {
-                      final languageCode = ref.read(localeProvider).languageCode;
+                      final languageCode = ref
+                          .read(localeProvider)
+                          .languageCode;
                       notifier.sendMessage(val, languageCode: languageCode);
                       _controller.clear();
                       _scrollToBottom();
@@ -486,8 +555,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   child: IconButton(
                     icon: const Icon(Icons.send, color: Colors.white),
                     onPressed: () {
-                      final languageCode = ref.read(localeProvider).languageCode;
-                      notifier.sendMessage(_controller.text, languageCode: languageCode);
+                      final languageCode = ref
+                          .read(localeProvider)
+                          .languageCode;
+                      notifier.sendMessage(
+                        _controller.text,
+                        languageCode: languageCode,
+                      );
                       _controller.clear();
                       _scrollToBottom();
                     },
@@ -506,10 +580,7 @@ class _MethodChip extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _MethodChip({
-    required this.label,
-    required this.onTap,
-  });
+  const _MethodChip({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -550,17 +621,12 @@ class _SuggestionChip extends StatelessWidget {
           decoration: BoxDecoration(
             color: colorScheme.surfaceContainerHighest.withAlpha(150),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: colorScheme.outline.withAlpha(50),
-            ),
+            border: Border.all(color: colorScheme.outline.withAlpha(50)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                emoji,
-                style: const TextStyle(fontSize: 14),
-              ),
+              Text(emoji, style: const TextStyle(fontSize: 14)),
               const SizedBox(width: 6),
               Text(
                 label,

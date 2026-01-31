@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import '../models/decision_session.dart';
+
 class DeepSeekService {
   final Dio _dio = Dio();
   final String _baseUrl = 'https://api.deepseek.com/v1';
@@ -31,6 +33,11 @@ You MUST follow this exact sequence and ask only ONE thing at a time:
 - Do not ask multiple questions at once.
 - Once you have enough data for a step, move to the next.
 - If the user provides multiple pieces of info, acknowledge and ask for the next missing piece.
+- **IMPORTANT**: When the user asks for results or to perform a calculation, summarize the result with a **deep human-language analysis**.
+- Focus on the **Top 3 choices** (or all if fewer than 3).
+- Explain **WHY** they are ranked as such based on their performance in the most important criteria.
+- Use a professional yet helpful tone.
+- Tell the user they can see the full **Calculation Matrices** (normalization, weights, etc.) by clicking the **Analytics/Insights icon** (📈) in the top bar for technical verification.
 ''';
 
   Future<String> _makeRawRequest(List<Map<String, String>> messages) async {
@@ -59,10 +66,19 @@ You MUST follow this exact sequence and ask only ONE thing at a time:
     }
   }
 
-  Future<String> getChatResponse(List<Map<String, String>> messages, {String? languageCode}) async {
+  Future<String> getChatResponse(
+    List<Map<String, String>> messages, {
+    String? languageCode,
+    DecisionSession? session,
+  }) async {
     // Prepend the personality/guide prompt for normal chat
     String systemPrompt = chatSystemPrompt;
-    
+
+    // Add current session context to system prompt
+    if (session != null) {
+      systemPrompt += _buildCurrentStatePrompt(session);
+    }
+
     // Append language instruction
     if (languageCode == 'id') {
       systemPrompt += "\n\nIMPORTANT: You MUST reply in INDONESIAN language.";
@@ -79,10 +95,19 @@ You MUST follow this exact sequence and ask only ONE thing at a time:
 
   /// This method asks the AI to extract structured data from the conversation
   Future<Map<String, dynamic>?> extractStructuredData(
-    List<Map<String, String>> conversationHistory,
-  ) async {
-    const extractionPrompt = '''
+    List<Map<String, String>> conversationHistory, {
+    DecisionSession? session,
+  }) async {
+    String extractionPrompt = '''
 You are a data extraction tool for a DSS. Analyze the chat and extract the **TOTAL CURRENT STATE** of the decision components into JSON.
+''';
+
+    if (session != null) {
+      extractionPrompt +=
+          "\nKNOWN CURRENT STATE (Base off this if discussion is minimal):\n${_buildCurrentStatePrompt(session)}\n";
+    }
+
+    extractionPrompt += '''
 JSON Structure:
 {
   "title": string | null,
@@ -91,7 +116,7 @@ JSON Structure:
   "status": "gathering" | "ready" | "calculated"
 }
 Rules:
-- You MUST return EVERY criterion and alternative ever mentioned in the chat history. 
+- You MUST return EVERY criterion and alternative ever mentioned in the chat history OR provided in the KNOWN CURRENT STATE. 
 - Do not omit previous data just because you are discussing new data.
 - status is "gathering" while info is missing, "ready" once title, criteria, alternatives, and scores are present.
 - Return ONLY JSON.
@@ -116,5 +141,36 @@ Rules:
       debugPrint('Extraction error: $e');
       return null;
     }
+  }
+
+  String _buildCurrentStatePrompt(DecisionSession session) {
+    String prompt = "\n\nCURRENT LOADED DECISION DATA:\n";
+    prompt += "Title: ${session.title}\n";
+
+    if (session.criteria.isNotEmpty) {
+      prompt += "Criteria:\n";
+      for (var c in session.criteria) {
+        prompt += "- ${c.name} (${c.type.name}, weight: ${c.weight})\n";
+      }
+    }
+
+    if (session.alternatives.isNotEmpty) {
+      prompt += "Alternatives:\n";
+      for (var a in session.alternatives) {
+        prompt += "- ${a.name} (Scores: ${a.scores})\n";
+      }
+    }
+
+    if (session.results != null && session.results!.isNotEmpty) {
+      prompt += "Calculation Results (Rankings):\n";
+      for (var r in session.results!) {
+        prompt +=
+            "- Rank #${r.rank}: ${r.alternativeName} (Score: ${r.score.toStringAsFixed(4)})\n";
+      }
+    }
+
+    prompt +=
+        "\nNote: USE the data above as context. If the user asks for analysis, explain the top winners based on how they scored in the criteria mentioned above.";
+    return prompt;
   }
 }

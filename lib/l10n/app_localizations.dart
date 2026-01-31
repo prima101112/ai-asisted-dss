@@ -20,14 +20,17 @@ class AppLocalizations {
       'signInGoogle': 'Sign in with Google',
       'signInCancelled': 'Sign in was cancelled',
       'signInFailed': 'Failed to sign in. Please try again.',
-      'termsText': 'By signing in, you agree to our Terms of Service\nand Privacy Policy',
+      'termsText':
+          'By signing in, you agree to our Terms of Service\nand Privacy Policy',
       'newChat': 'New Chat',
       'history': 'History',
       'signOut': 'Sign Out',
       'user': 'User',
       'welcome': 'Welcome',
-      'welcomeMessage': "Hello! I'm your AI decision assistant. What would you like to decide today?",
-      'welcomeBackMessage': "Welcome back! I've loaded your previous decision data. How can I help you?",
+      'welcomeMessage':
+          "Hello! I'm your AI decision assistant. What would you like to decide today?",
+      'welcomeBackMessage':
+          "Welcome back! I've loaded your previous decision data. How can I help you?",
       'helloGreeting': 'Hi',
       'whatHelp': 'What decision do you need help with?',
       'typeMessage': 'Type your message...',
@@ -47,6 +50,7 @@ class AppLocalizations {
       'title': 'Title',
       'defined': 'defined',
       'selectMethod': 'Select Calculation Method:',
+      'calculationSteps': 'Calculation Steps',
 
       'alternative': 'Alternative',
       'score': 'Score',
@@ -90,6 +94,11 @@ class AppLocalizations {
       'lightTheme': 'Light',
       'darkTheme': 'Dark',
       'systemTheme': 'System',
+      'delete': 'Delete',
+      'deleteConfirm': 'Delete Decision',
+      'deleteConfirmMsg':
+          'Are you sure you want to delete this decision? This action cannot be undone.',
+      'cancel': 'Cancel',
     },
     'id': {
       'appTitle': 'Asisten Keputusan AI',
@@ -97,14 +106,17 @@ class AppLocalizations {
       'signInGoogle': 'Masuk dengan Google',
       'signInCancelled': 'Masuk dibatalkan',
       'signInFailed': 'Gagal masuk. Silakan coba lagi.',
-      'termsText': 'Dengan masuk, Anda menyetujui Ketentuan Layanan\ndan Kebijakan Privasi kami',
+      'termsText':
+          'Dengan masuk, Anda menyetujui Ketentuan Layanan\ndan Kebijakan Privasi kami',
       'newChat': 'Chat Baru',
       'history': 'Riwayat',
       'signOut': 'Keluar',
       'user': 'Pengguna',
       'welcome': 'Selamat Datang',
-      'welcomeMessage': 'Halo! Saya asisten keputusan AI Anda. Apa yang ingin Anda putuskan hari ini?',
-      'welcomeBackMessage': 'Selamat kembali! Saya telah memuat data keputusan Anda sebelumnya. Ada yang bisa saya bantu?',
+      'welcomeMessage':
+          'Halo! Saya asisten keputusan AI Anda. Apa yang ingin Anda putuskan hari ini?',
+      'welcomeBackMessage':
+          'Selamat kembali! Saya telah memuat data keputusan Anda sebelumnya. Ada yang bisa saya bantu?',
       'helloGreeting': 'Hai',
       'whatHelp': 'Keputusan apa yang perlu dibantu?',
       'typeMessage': 'Ketik pesan Anda...',
@@ -124,11 +136,14 @@ class AppLocalizations {
       'title': 'Judul',
       'defined': 'terdefinisi',
       'selectMethod': 'Pilih Metode Perhitungan:',
+      'calculationSteps': 'Langkah Perhitungan',
 
       'alternative': 'Alternatif',
       'score': 'Skor',
-      'gatherMoreInfo': 'Kumpulkan info lagi atau pilih metode untuk melihat hasil.',
-      'startConversation': 'Mulai percakapan untuk mengumpulkan data keputusan.',
+      'gatherMoreInfo':
+          'Kumpulkan info lagi atau pilih metode untuk melihat hasil.',
+      'startConversation':
+          'Mulai percakapan untuk mengumpulkan data keputusan.',
       'menu': 'Menu',
       'smartDss': 'Smart DSS',
       'chooseBestOption': 'Pilih opsi terbaik',
@@ -167,6 +182,11 @@ class AppLocalizations {
       'lightTheme': 'Terang',
       'darkTheme': 'Gelap',
       'systemTheme': 'Sistem',
+      'delete': 'Hapus',
+      'deleteConfirm': 'Hapus Keputusan',
+      'deleteConfirmMsg':
+          'Apakah Anda yakin ingin menghapus keputusan ini? Tindakan ini tidak dapat dibatalkan.',
+      'cancel': 'Batal',
     },
   };
 

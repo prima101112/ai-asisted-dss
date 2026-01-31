@@ -78,16 +78,35 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
   /// Start a new decision using data from an existing history session
   /// Creates a NEW session with NEW id and timestamp, copies data from history
-  void startFromHistory(DecisionSession historySession, {String languageCode = 'en'}) {
+  void startFromHistory(
+    DecisionSession historySession, {
+    String languageCode = 'en',
+  }) {
+    // Determine initial status based on data
+    final hasData =
+        historySession.criteria.isNotEmpty &&
+        historySession.alternatives.isNotEmpty;
+    final initialStatus = hasData ? 'ready' : 'gathering';
+
     final newSession = DecisionSession(
       id: const Uuid().v4(), // New unique ID
       title: historySession.title,
       criteria: List.from(historySession.criteria), // Copy criteria
       alternatives: List.from(historySession.alternatives), // Copy alternatives
       createdAt: DateTime.now(), // New timestamp
-      status: 'gathering', // Reset status
+      status: initialStatus,
       // Don't copy results - user may want to recalculate
     );
+
+    debugPrint(
+      "Loaded from history: ${newSession.criteria.length} criteria, ${newSession.alternatives.length} alternatives",
+    );
+    for (var c in newSession.criteria) {
+      debugPrint("  Criterion: ${c.name} (weight: ${c.weight})");
+    }
+    for (var a in newSession.alternatives) {
+      debugPrint("  Alternative: ${a.name}");
+    }
 
     final welcomeBackMsg = languageCode == 'id'
         ? "Selamat kembali! Saya telah memuat data keputusan Anda sebelumnya untuk '${historySession.title}'. Anda memiliki ${historySession.criteria.length} kriteria dan ${historySession.alternatives.length} alternatif yang siap. Apakah Anda ingin membuat perubahan atau melanjutkan untuk menghitung hasil?"
@@ -95,12 +114,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
     state = ChatState(
       session: newSession,
-      messages: [
-        ChatMessage(
-          content: welcomeBackMsg,
-          isUser: false,
-        ),
-      ],
+      messages: [ChatMessage(content: welcomeBackMsg, isUser: false)],
     );
   }
 
@@ -120,12 +134,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
 
     state = ChatState(
       session: session,
-      messages: [
-        ChatMessage(
-          content: welcomeMsg,
-          isUser: false,
-        ),
-      ],
+      messages: [ChatMessage(content: welcomeMsg, isUser: false)],
     );
   }
 
@@ -149,7 +158,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
           )
           .toList();
 
-      final aiResponse = await _aiService.getChatResponse(history, languageCode: languageCode);
+      final aiResponse = await _aiService.getChatResponse(
+        history,
+        languageCode: languageCode,
+        session: state.session,
+      );
 
       final assistantMessage = ChatMessage(content: aiResponse, isUser: false);
       state = state.copyWith(
@@ -183,7 +196,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
         )
         .toList();
 
-    final data = await _aiService.extractStructuredData(history);
+    final data = await _aiService.extractStructuredData(
+      history,
+      session: state.session,
+    );
     if (data != null) {
       try {
         final currentSession = state.session!;
@@ -192,11 +208,10 @@ class ChatNotifier extends StateNotifier<ChatState> {
         final newTitle = data['title'] ?? currentSession.title;
 
         // 2. Criteria Merge
-        // Only replace if extracted criteria is NOT empty
         final extractedCriteria = (data['criteria'] as List?)
             ?.map(
               (c) => Criterion(
-                id: c['name'],
+                id: c['name'], // Using name as ID for now
                 name: c['name'],
                 weight: (c['weight'] as num?)?.toDouble() ?? 1.0,
                 type: c['type'] == 'cost'
@@ -206,16 +221,35 @@ class ChatNotifier extends StateNotifier<ChatState> {
             )
             .toList();
 
-        final newCriteria =
-            (extractedCriteria != null && extractedCriteria.isNotEmpty)
-            ? extractedCriteria
-            : currentSession.criteria;
+        final List<Criterion> mergedCriteria = List.from(
+          currentSession.criteria,
+        );
+        if (extractedCriteria != null) {
+          for (var extracted in extractedCriteria) {
+            final index = mergedCriteria.indexWhere(
+              (existing) => existing.name == extracted.name,
+            );
+            if (index != -1) {
+              // Update existing
+              mergedCriteria[index] = Criterion(
+                id: mergedCriteria[index].id,
+                name: extracted.name,
+                weight: extracted.weight,
+                type: extracted.type,
+              );
+            } else {
+              // Add new
+              mergedCriteria.add(extracted);
+            }
+          }
+        }
+        final newCriteria = mergedCriteria;
 
         // 3. Alternatives Merge
         final extractedAlternatives = (data['alternatives'] as List?)
             ?.map(
               (a) => Alternative(
-                id: a['name'],
+                id: a['name'], // Using name as ID for now
                 name: a['name'],
                 scores:
                     (a['scores'] as Map<String, dynamic>?)?.map(
@@ -226,10 +260,33 @@ class ChatNotifier extends StateNotifier<ChatState> {
             )
             .toList();
 
-        final newAlternatives =
-            (extractedAlternatives != null && extractedAlternatives.isNotEmpty)
-            ? extractedAlternatives
-            : currentSession.alternatives;
+        final List<Alternative> mergedAlternatives = List.from(
+          currentSession.alternatives,
+        );
+        if (extractedAlternatives != null) {
+          for (var extracted in extractedAlternatives) {
+            final index = mergedAlternatives.indexWhere(
+              (existing) => existing.name == extracted.name,
+            );
+            if (index != -1) {
+              // Merge scores
+              final updatedScores = Map<String, double>.from(
+                mergedAlternatives[index].scores,
+              );
+              updatedScores.addAll(extracted.scores);
+
+              mergedAlternatives[index] = Alternative(
+                id: mergedAlternatives[index].id,
+                name: extracted.name,
+                scores: updatedScores,
+              );
+            } else {
+              // Add new
+              mergedAlternatives.add(extracted);
+            }
+          }
+        }
+        final newAlternatives = mergedAlternatives;
 
         final session = DecisionSession(
           id: currentSession.id,
@@ -256,7 +313,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
   void calculateRanking(DSSMethod method) {
     if (state.session == null) return;
 
-    final results = DSSEngine.calculate(
+    final result = DSSEngine.calculate(
       state.session!.criteria,
       state.session!.alternatives,
       method,
@@ -268,12 +325,21 @@ class ChatNotifier extends StateNotifier<ChatState> {
       criteria: state.session!.criteria,
       alternatives: state.session!.alternatives,
       selectedMethod: method,
-      results: results,
+      results: result.rankings,
+      calculationMatrices: result.matrices,
       createdAt: state.session!.createdAt,
       status: 'calculated',
     );
 
     state = state.copyWith(session: updatedSession, isDirty: true);
     _firebaseService.saveSession(updatedSession);
+  }
+
+  Future<void> deleteSession(String id) async {
+    await _firebaseService.deleteSession(id);
+    // If deleted session is the current one, reset chat
+    if (state.session?.id == id) {
+      _initSession();
+    }
   }
 }

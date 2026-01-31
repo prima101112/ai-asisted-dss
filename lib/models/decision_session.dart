@@ -40,6 +40,7 @@ class DecisionSession {
   final List<Alternative> alternatives;
   final DSSMethod? selectedMethod;
   final List<RankingResult>? results;
+  final Map<String, dynamic>? calculationMatrices;
   final DateTime createdAt;
   final String status; // 'gathering', 'ready', 'calculated'
 
@@ -50,6 +51,7 @@ class DecisionSession {
     required this.alternatives,
     this.selectedMethod,
     this.results,
+    this.calculationMatrices,
     required this.createdAt,
     this.status = 'gathering',
   });

@@ -126,17 +126,42 @@ class HistoryScreen extends ConsumerWidget {
   }
 }
 
-class _HistoryItemCard extends StatelessWidget {
+class _HistoryItemCard extends ConsumerWidget {
   final DecisionSession session;
   final VoidCallback onUseAgain;
 
-  const _HistoryItemCard({
-    required this.session,
-    required this.onUseAgain,
-  });
+  const _HistoryItemCard({required this.session, required this.onUseAgain});
+
+  void _confirmDelete(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.translate('deleteConfirm')),
+        content: Text(l10n.translate('deleteConfirmMsg')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(l10n.translate('cancel')),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () {
+              ref.read(chatProvider.notifier).deleteSession(session.id);
+              Navigator.pop(context);
+            },
+            child: Text(l10n.translate('delete')),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final dateFormat = DateFormat('dd MMM yyyy, HH:mm');
@@ -145,7 +170,7 @@ class _HistoryItemCard extends StatelessWidget {
     Color statusColor;
     IconData statusIcon;
     String statusText;
-    
+
     switch (session.status) {
       case 'calculated':
         statusColor = Colors.green;
@@ -167,9 +192,7 @@ class _HistoryItemCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: colorScheme.outlineVariant.withAlpha(100),
-        ),
+        side: BorderSide(color: colorScheme.outlineVariant.withAlpha(100)),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -194,9 +217,8 @@ class _HistoryItemCard extends StatelessWidget {
                       children: [
                         Text(
                           session.title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.bold),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -211,8 +233,12 @@ class _HistoryItemCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withAlpha(30),
                       borderRadius: BorderRadius.circular(12),
@@ -243,13 +269,15 @@ class _HistoryItemCard extends StatelessWidget {
                 children: [
                   _StatChip(
                     icon: Icons.checklist,
-                    label: '${session.criteria.length} ${l10n.translate('criteria')}',
+                    label:
+                        '${session.criteria.length} ${l10n.translate('criteria')}',
                     color: colorScheme.tertiary,
                   ),
                   const SizedBox(width: 8),
                   _StatChip(
                     icon: Icons.compare_arrows,
-                    label: '${session.alternatives.length} ${l10n.translate('alternatives')}',
+                    label:
+                        '${session.alternatives.length} ${l10n.translate('alternatives')}',
                     color: colorScheme.secondary,
                   ),
                 ],
@@ -297,19 +325,33 @@ class _HistoryItemCard extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Action button
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: onUseAgain,
-                  icon: const Icon(Icons.replay, size: 18),
-                  label: Text(l10n.translate('useAgain')),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+              // Action buttons
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onUseAgain,
+                      icon: const Icon(Icons.replay, size: 18),
+                      label: Text(l10n.translate('useAgain')),
+                      style: OutlinedButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 12),
+                  IconButton.outlined(
+                    onPressed: () => _confirmDelete(context, ref),
+                    icon: Icon(Icons.delete_outline, color: colorScheme.error),
+                    style: IconButton.styleFrom(
+                      side: BorderSide(color: colorScheme.error.withAlpha(100)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

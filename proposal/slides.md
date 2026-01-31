@@ -131,6 +131,16 @@ class: text-center
 </v-clicks>
 
 ---
+layout: center
+---
+
+# Application Preview
+
+<div class="flex justify-center mt-4">
+  <img src="/ss.png" class="rounded-lg shadow-xl border border-white/10 w-2/3" />
+</div>
+
+---
 layout: end
 ---
 
