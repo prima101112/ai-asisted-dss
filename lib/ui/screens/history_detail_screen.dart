@@ -75,7 +75,8 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
     final session = widget.session;
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    final dateFormat = DateFormat('EEEE, dd MMMM yyyy • HH:mm');
+    final localeCode = ref.watch(localeProvider).languageCode;
+    final dateFormat = DateFormat('EEEE, dd MMMM yyyy • HH:mm', localeCode);
 
     // Determine status styling
     Color statusColor;
