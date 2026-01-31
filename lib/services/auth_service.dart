@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 
 /// Service for handling Google Sign-In authentication
 class AuthService {
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  FirebaseAuth get _firebaseAuth => FirebaseAuth.instance;
   
   // iOS Client ID from Google Cloud Console
   static const String _iosClientId = 
