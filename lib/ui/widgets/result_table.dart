@@ -2,81 +2,125 @@ import 'package:flutter/material.dart';
 import '../../models/decision_session.dart';
 import '../../l10n/app_localizations.dart';
 
-class ResultTable extends StatelessWidget {
+class ResultTable extends StatefulWidget {
   final List<RankingResult> results;
 
   const ResultTable({super.key, required this.results});
 
   @override
+  State<ResultTable> createState() => _ResultTableState();
+}
+
+class _ResultTableState extends State<ResultTable> {
+  bool _isExpanded = false;
+  static const int _initialItemCount = 5;
+
+  @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
+    
+    // Determine which items to show
+    final itemCount = widget.results.length;
+    final showExpandButton = itemCount > _initialItemCount;
+    final displayedResults = (_isExpanded || !showExpandButton) 
+        ? widget.results 
+        : widget.results.take(_initialItemCount).toList();
 
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withAlpha(12),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Column(
-          children: [
-            // Header row
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withAlpha(25),
+    return Column(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            color: colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(12),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
               ),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 50,
-                    child: Text(
-                      l10n.translate('rank'),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: colorScheme.onSurface,
-                      ),
-                    ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Column(
+              children: [
+                // Header row
+                  Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest.withAlpha(128),
                   ),
-                  Expanded(
-                    child: Text(
-                      l10n.translate('alternative'),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: colorScheme.onSurface,
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 70, // Increased width
+                        child: Center( // Center alignment
+                          child: Text(
+                            l10n.translate('rank'),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  SizedBox(
-                    width: 70,
-                    child: Text(
-                      l10n.translate('score'),
-                      textAlign: TextAlign.end,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                        color: colorScheme.onSurface,
+                      const SizedBox(width: 16), // Added spacing
+                      Expanded(
+                        child: Text(
+                          l10n.translate('alternative'),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
                       ),
-                    ),
+                      SizedBox(
+                        width: 70,
+                        child: Text(
+                          l10n.translate('score'),
+                          textAlign: TextAlign.end,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+                // Data rows
+                ...displayedResults.map((res) => _buildResultRow(context, res)),
+              ],
+            ),
+          ),
+        ),
+        
+        // Expand/Collapse Button
+        if (showExpandButton)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              icon: Icon(
+                _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                size: 20,
+              ),
+              label: Text(
+                _isExpanded 
+                  ? l10n.translate('showLess')
+                  : l10n.translate('showMore').replaceAll('{count}', '${itemCount - _initialItemCount}'),
               ),
             ),
-            // Data rows
-            ...results.map((res) => _buildResultRow(context, res)),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 
@@ -99,7 +143,7 @@ class ResultTable extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: colorScheme.outline.withAlpha(30),
+            color: colorScheme.outlineVariant.withAlpha(100),
             width: 1,
           ),
         ),
@@ -108,35 +152,40 @@ class ResultTable extends StatelessWidget {
         children: [
           // Rank circle - aligned with history detail design
           SizedBox(
-            width: 50,
-            child: CircleAvatar(
-              radius: 14,
-              backgroundColor: isTop3 && medalColor != null
-                  ? medalColor.withAlpha(40)
-                  : colorScheme.surfaceContainerHighest,
-              child: Text(
-                '${res.rank}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isTop3 && medalColor != null
-                      ? medalColor
-                      : colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.bold,
+            width: 70, // Increased width
+            child: Center( // Center alignment
+              child: CircleAvatar(
+                radius: 14,
+                backgroundColor: isTop3 && medalColor != null
+                    ? medalColor.withAlpha(40)
+                    : colorScheme.surfaceContainerHighest,
+                child: Text(
+                  '${res.rank}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isTop3 && medalColor != null
+                        ? medalColor
+                        : colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
           ),
+          const SizedBox(width: 16), // Added spacing
           // Alternative name with flexible space
           Expanded(
-            child: Text(
-              res.alternativeName,
-              style: TextStyle(
-                fontWeight: isTop3 ? FontWeight.w600 : FontWeight.normal,
-                fontSize: 14,
-                color: colorScheme.onSurface,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Text(
+                res.alternativeName,
+                style: TextStyle(
+                  fontWeight: isTop3 ? FontWeight.w600 : FontWeight.normal,
+                  fontSize: 14,
+                  color: colorScheme.onSurface,
+                ),
+                maxLines: 1,
               ),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
             ),
           ),
           // Score - fixed width, right aligned

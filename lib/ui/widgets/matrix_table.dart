@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_localizations.dart';
 
-class MatrixTable extends StatelessWidget {
+class MatrixTable extends StatefulWidget {
   final String title;
   final Map<String, dynamic> data;
   final List<String> criteriaNames;
@@ -15,11 +16,19 @@ class MatrixTable extends StatelessWidget {
   });
 
   @override
+  State<MatrixTable> createState() => _MatrixTableState();
+}
+
+class _MatrixTableState extends State<MatrixTable> {
+  bool _isExpanded = false;
+  static const int _initialItemCount = 5;
+
+  @override
   Widget build(BuildContext context) {
     // If it's a 2D matrix (Alternative ID -> Criterion ID -> Value)
-    if (data.isEmpty) return const SizedBox.shrink();
+    if (widget.data.isEmpty) return const SizedBox.shrink();
 
-    final firstValue = data.values.first;
+    final firstValue = widget.data.values.first;
 
     // Check if it's a 2D matrix or a simple 1D map
     if (firstValue is Map<String, dynamic>) {
@@ -31,21 +40,32 @@ class MatrixTable extends StatelessWidget {
 
   Widget _build2DTable(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
+    
+    final entries = widget.data.entries.toList();
+    final itemCount = entries.length;
+    final showExpandButton = itemCount > _initialItemCount;
+    final displayedEntries = (_isExpanded || !showExpandButton) 
+        ? entries 
+        : entries.take(_initialItemCount).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
           child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            widget.title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
           ),
         ),
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colorScheme.outlineVariant),
+            border: Border.all(color: colorScheme.outlineVariant.withAlpha(100)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -53,28 +73,28 @@ class MatrixTable extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: DataTable(
                 headingRowColor: WidgetStateProperty.all(
-                  colorScheme.surfaceContainerHighest,
+                  colorScheme.surfaceContainerHighest.withAlpha(128),
                 ),
                 columnSpacing: 24,
+                horizontalMargin: 16,
+                headingTextStyle: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: colorScheme.onSurfaceVariant,
+                ),
                 columns: [
                   const DataColumn(
-                    label: Text(
-                      'Alternative',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    label: Text('Alternative'),
                   ),
-                  ...criteriaNames.map(
+                  ...widget.criteriaNames.map(
                     (c) => DataColumn(
-                      label: Text(
-                        c,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      label: Text(c),
                     ),
                   ),
                 ],
-                rows: data.entries.map((entry) {
+                rows: displayedEntries.map((entry) {
                   final altId = entry.key;
-                  final altName = alternativeNames[altId] ?? altId;
+                  final altName = widget.alternativeNames[altId] ?? altId;
                   final values = entry.value as Map<String, dynamic>;
 
                   return DataRow(
@@ -85,7 +105,7 @@ class MatrixTable extends StatelessWidget {
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                       ),
-                      ...criteriaNames.map((cId) {
+                      ...widget.criteriaNames.map((cId) {
                         final val = values[cId];
                         return DataCell(
                           Text(
@@ -102,6 +122,26 @@ class MatrixTable extends StatelessWidget {
             ),
           ),
         ),
+        // Expand/Collapse Button
+        if (showExpandButton)
+          Center(
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              icon: Icon(
+                _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                size: 20,
+              ),
+              label: Text(
+                _isExpanded 
+                  ? l10n.translate('showLess')
+                  : l10n.translate('showMore').replaceAll('{count}', '${itemCount - _initialItemCount}'),
+              ),
+            ),
+          ),
         const SizedBox(height: 16),
       ],
     );
@@ -109,44 +149,55 @@ class MatrixTable extends StatelessWidget {
 
   Widget _build1DTable(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final l10n = AppLocalizations.of(context);
+
+    final entries = widget.data.entries.toList();
+    final itemCount = entries.length;
+    final showExpandButton = itemCount > _initialItemCount;
+    final displayedEntries = (_isExpanded || !showExpandButton) 
+        ? entries 
+        : entries.take(_initialItemCount).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
           child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+            widget.title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: colorScheme.onSurface,
+            ),
           ),
         ),
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colorScheme.outlineVariant),
+            border: Border.all(color: colorScheme.outlineVariant.withAlpha(100)),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: DataTable(
               headingRowColor: WidgetStateProperty.all(
-                colorScheme.surfaceContainerHighest,
+                colorScheme.surfaceContainerHighest.withAlpha(128),
+              ),
+              horizontalMargin: 16,
+              headingTextStyle: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 12,
+                color: colorScheme.onSurfaceVariant,
               ),
               columns: const [
                 DataColumn(
-                  label: Text(
-                    'Item',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  label: Text('Item'),
                 ),
                 DataColumn(
-                  label: Text(
-                    'Value',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+                  label: Text('Value'),
                 ),
               ],
-              rows: data.entries.map((entry) {
+              rows: displayedEntries.map((entry) {
                 return DataRow(
                   cells: [
                     DataCell(Text(entry.key)),
@@ -163,6 +214,26 @@ class MatrixTable extends StatelessWidget {
             ),
           ),
         ),
+        // Expand/Collapse Button
+        if (showExpandButton)
+          Center(
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _isExpanded = !_isExpanded;
+                });
+              },
+              icon: Icon(
+                _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                size: 20,
+              ),
+              label: Text(
+                _isExpanded 
+                  ? l10n.translate('showLess')
+                  : l10n.translate('showMore').replaceAll('{count}', '${itemCount - _initialItemCount}'),
+              ),
+            ),
+          ),
         const SizedBox(height: 16),
       ],
     );
