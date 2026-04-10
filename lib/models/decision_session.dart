@@ -9,6 +9,8 @@ enum DSSMethod {
   saw,
   @JsonValue('WP')
   wp,
+  @JsonValue('AHP')
+  ahp,
   @JsonValue('TOPSIS')
   topsis,
 }

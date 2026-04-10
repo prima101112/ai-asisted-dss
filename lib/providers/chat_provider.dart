@@ -760,6 +760,11 @@ class ChatNotifier extends StateNotifier<ChatState> {
     if (RegExp(r'\bwp\b|\bweighted product\b').hasMatch(normalized)) {
       matchedMethods.add(DSSMethod.wp);
     }
+    if (RegExp(
+      r'\bahp\b|\banalytic hierarchy process\b',
+    ).hasMatch(normalized)) {
+      matchedMethods.add(DSSMethod.ahp);
+    }
     if (RegExp(r'\btopsis\b').hasMatch(normalized)) {
       matchedMethods.add(DSSMethod.topsis);
     }

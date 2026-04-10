@@ -2,7 +2,7 @@
 
 ![App Preview](docs/readme.png)
 
-A professional **AI-Assisted Decision Support System** built with Flutter. This app guides users through complex decision-making processes using a structured conversational interface and calculates rankings using standard DSS methods (**SAW, WP, and TOPSIS**).
+A professional **AI-Assisted Decision Support System** built with Flutter. This app guides users through complex decision-making processes using a structured conversational interface and calculates rankings using standard DSS methods (**SAW, WP, AHP, and TOPSIS**).
 
 Created with ❤️ by:
 - **Prima Adi**
@@ -18,9 +18,10 @@ Created with ❤️ by:
 - **📊 Multiple Ranking Methods**:
   - **SAW** (Simple Additive Weighting)
   - **WP** (Weighted Product)
+  - **AHP** (Analytic Hierarchy Process)
   - **TOPSIS**
 - **📜 Decision History**: Save your sessions automatically. Resume previous conversations or **reuse data** (criteria/alternatives) for new calculations.
-- **⚡ Smart Shortcuts**: Quick-access chips to trigger calculations (SAW/WP/TOPSIS) instantly when data is ready.
+- **⚡ Smart Shortcuts**: Quick-access chips to trigger calculations (SAW/WP/AHP/TOPSIS) instantly when data is ready.
 - **☁️ Cloud Persistence**: Integrated with Firebase Firestore to sync your decision cases securely.
 
 ---

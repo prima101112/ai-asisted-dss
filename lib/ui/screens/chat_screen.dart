@@ -449,8 +449,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget _buildInputArea(ChatNotifier notifier) {
     final l10n = AppLocalizations.of(context);
     final chatState = ref.watch(chatProvider);
-    final isReady = chatState.session?.status == 'ready';
     final isLoading = chatState.isLoading;
+    final session = chatState.session;
+    final hasMethodContext =
+        session != null &&
+        session.criteria.isNotEmpty &&
+        session.alternatives.isNotEmpty;
+    final canCalculate = _canCalculate(session);
 
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -468,7 +473,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (isReady) ...[
+            if (hasMethodContext) ...[
               Padding(
                 padding: const EdgeInsets.only(bottom: 8.0, left: 4.0),
                 child: Text(
@@ -487,7 +492,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   children: [
                     _MethodChip(
                       label: 'SAW',
-                      enabled: !isLoading,
+                      enabled: !isLoading && canCalculate,
                       onTap: () {
                         final languageCode = ref
                             .read(localeProvider)
@@ -502,7 +507,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     const SizedBox(width: 8),
                     _MethodChip(
                       label: 'WP',
-                      enabled: !isLoading,
+                      enabled: !isLoading && canCalculate,
                       onTap: () {
                         final languageCode = ref
                             .read(localeProvider)
@@ -516,8 +521,23 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     ),
                     const SizedBox(width: 8),
                     _MethodChip(
+                      label: 'AHP',
+                      enabled: !isLoading && canCalculate,
+                      onTap: () {
+                        final languageCode = ref
+                            .read(localeProvider)
+                            .languageCode;
+                        notifier.calculateRankingAndAnalyze(
+                          DSSMethod.ahp,
+                          languageCode: languageCode,
+                        );
+                        _scrollToBottom();
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    _MethodChip(
                       label: 'TOPSIS',
-                      enabled: !isLoading,
+                      enabled: !isLoading && canCalculate,
                       onTap: () {
                         final languageCode = ref
                             .read(localeProvider)
@@ -532,6 +552,17 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ],
                 ),
               ),
+              if (!canCalculate)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12.0, left: 4.0),
+                  child: Text(
+                    l10n.translate('completeDecisionDataHint'),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
             ],
             Row(
               children: [
@@ -594,6 +625,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ),
       ),
     );
+  }
+
+  bool _canCalculate(DecisionSession? session) {
+    if (session == null ||
+        session.title.trim().isEmpty ||
+        session.criteria.isEmpty ||
+        session.alternatives.isEmpty) {
+      return false;
+    }
+
+    for (final criterion in session.criteria) {
+      if (criterion.name.trim().isEmpty ||
+          !criterion.weight.isFinite ||
+          criterion.weight <= 0) {
+        return false;
+      }
+    }
+
+    for (final alternative in session.alternatives) {
+      if (alternative.name.trim().isEmpty) return false;
+      for (final criterion in session.criteria) {
+        final score = alternative.scores[criterion.id];
+        if (score == null || !score.isFinite) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 }
 

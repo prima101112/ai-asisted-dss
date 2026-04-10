@@ -58,5 +58,6 @@ Map<String, dynamic> _$DecisionSessionToJson(DecisionSession instance) =>
 const _$DSSMethodEnumMap = {
   DSSMethod.saw: 'SAW',
   DSSMethod.wp: 'WP',
+  DSSMethod.ahp: 'AHP',
   DSSMethod.topsis: 'TOPSIS',
 };

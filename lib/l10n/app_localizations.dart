@@ -50,6 +50,8 @@ class AppLocalizations {
       'title': 'Title',
       'defined': 'defined',
       'selectMethod': 'Select Calculation Method:',
+      'completeDecisionDataHint':
+          'Complete the title, criteria, alternatives, and scores to enable calculation methods.',
       'calculationSteps': 'Calculation Steps',
 
       'alternative': 'Alternative',
@@ -146,6 +148,8 @@ class AppLocalizations {
       'title': 'Judul',
       'defined': 'terdefinisi',
       'selectMethod': 'Pilih Metode Perhitungan:',
+      'completeDecisionDataHint':
+          'Lengkapi judul, kriteria, alternatif, dan semua skor untuk mengaktifkan metode perhitungan.',
       'calculationSteps': 'Langkah Perhitungan',
 
       'alternative': 'Alternatif',

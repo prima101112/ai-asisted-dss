@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:ai_assisted_dss/models/alternative.dart';
 import 'package:ai_assisted_dss/models/criterion.dart';
 import 'package:ai_assisted_dss/models/decision_session.dart';
+import 'package:ai_assisted_dss/logic/dss_engine.dart';
 import 'package:ai_assisted_dss/providers/chat_provider.dart';
 import 'package:ai_assisted_dss/services/deepseek_service.dart';
 import 'package:ai_assisted_dss/services/firebase_service.dart';
@@ -193,6 +194,44 @@ void main() {
       expect(notifier.state.messages.last.content, 'Local analysis');
     });
 
+    test('calculates AHP rankings and exposes audit matrices', () {
+      final result = DSSEngine.calculate(
+        [
+          Criterion(
+            id: 'price',
+            name: 'Price',
+            weight: 0.6,
+            type: CriterionType.cost,
+          ),
+          Criterion(
+            id: 'battery',
+            name: 'Battery',
+            weight: 0.4,
+            type: CriterionType.benefit,
+          ),
+        ],
+        [
+          Alternative(
+            id: 'a',
+            name: 'Laptop A',
+            scores: const {'price': 8, 'battery': 9},
+          ),
+          Alternative(
+            id: 'b',
+            name: 'Laptop B',
+            scores: const {'price': 12, 'battery': 7},
+          ),
+        ],
+        DSSMethod.ahp,
+      );
+
+      expect(result.rankings, isNotEmpty);
+      expect(result.rankings.first.alternativeName, 'Laptop A');
+      expect(result.matrices['Criteria Pairwise Matrix'], isNotNull);
+      expect(result.matrices['Criteria Priority Vector'], isNotNull);
+      expect(result.matrices['Battery Local Priority'], isNotNull);
+    });
+
     test(
       'recalculates locally when chat requests analysis with a different method',
       () async {
@@ -245,6 +284,52 @@ void main() {
         expect(notifier.state.messages.last.content, 'Local analysis');
       },
     );
+
+    test('routes AHP chat requests to local AHP analysis', () async {
+      notifier.startFromHistory(
+        DecisionSession(
+          id: 'history-ahp',
+          title: 'Choose Laptop',
+          criteria: [
+            Criterion(
+              id: 'price',
+              name: 'Price',
+              weight: 0.6,
+              type: CriterionType.cost,
+            ),
+            Criterion(
+              id: 'battery',
+              name: 'Battery',
+              weight: 0.4,
+              type: CriterionType.benefit,
+            ),
+          ],
+          alternatives: [
+            Alternative(
+              id: 'a',
+              name: 'Laptop A',
+              scores: const {'price': 8, 'battery': 9},
+            ),
+            Alternative(
+              id: 'b',
+              name: 'Laptop B',
+              scores: const {'price': 12, 'battery': 7},
+            ),
+          ],
+          createdAt: DateTime(2026),
+        ),
+      );
+
+      await notifier.sendMessage(
+        'Tolong jelaskan hasil ini dengan metode AHP',
+        languageCode: 'id',
+      );
+
+      expect(aiService.chatCalls, 0);
+      expect(aiService.analysisCalls, 1);
+      expect(notifier.state.session!.selectedMethod, DSSMethod.ahp);
+      expect(aiService.analysisSession!.selectedMethod, DSSMethod.ahp);
+    });
 
     test('clears stale results when extracted decision data changes', () async {
       notifier.startFromHistory(
