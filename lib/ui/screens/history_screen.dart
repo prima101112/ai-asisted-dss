@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../models/decision_session.dart';
 import '../../providers/chat_provider.dart';
+import '../../providers/locale_provider.dart';
 import 'chat_screen.dart';
 import 'history_detail_screen.dart';
 import '../../l10n/app_localizations.dart';
@@ -111,7 +112,10 @@ class HistoryScreen extends ConsumerWidget {
               return _HistoryItemCard(
                 session: session,
                 onUseAgain: () {
-                  ref.read(chatProvider.notifier).startFromHistory(session);
+                  final languageCode = ref.read(localeProvider).languageCode;
+                  ref
+                      .read(chatProvider.notifier)
+                      .startFromHistory(session, languageCode: languageCode);
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (_) => const ChatScreen()),
@@ -164,6 +168,9 @@ class _HistoryItemCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
+    final displayTitle = session.title.trim().isEmpty
+        ? l10n.translate('untitledDecision')
+        : session.title;
     final dateFormat = DateFormat('dd MMM yyyy, HH:mm');
 
     // Determine status color
@@ -216,7 +223,7 @@ class _HistoryItemCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          session.title,
+                          displayTitle,
                           style: Theme.of(context).textTheme.titleMedium
                               ?.copyWith(fontWeight: FontWeight.bold),
                           maxLines: 2,

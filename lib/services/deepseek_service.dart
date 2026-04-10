@@ -8,6 +8,7 @@ import '../models/decision_session.dart';
 class DeepSeekService {
   final Dio _dio = Dio();
   final String _baseUrl = 'https://api.deepseek.com/v1';
+  static const String _missingTitleLabel = '(not provided yet)';
 
   String get _apiKey {
     final key = dotenv.env['DEEPSEEK_API_KEY'] ?? '';
@@ -40,6 +41,18 @@ You MUST follow this exact sequence and ask only ONE thing at a time:
 - Explain **WHY** they are ranked as such based on their performance in the most important criteria.
 - Use a professional yet helpful tone.
 - Tell the user they can see the full **Calculation Matrices** (normalization, weights, etc.) by clicking the **Analytics/Insights icon** (📈) in the top bar for technical verification.
+''';
+
+  static const String calculationAnalysisSystemPrompt = '''
+You are a Decision Support System (DSS) result analyst.
+
+You MUST explain the decision using ONLY the local calculation context provided to you.
+- Never invent, modify, or recompute rankings, scores, or winners.
+- Never replace the provided local results with your own answer.
+- If local results are missing, say so briefly instead of guessing.
+- Focus on explaining why the ranked alternatives performed that way based on the provided criteria, weights, and scores.
+- Use Markdown formatting.
+- Keep the explanation concise, practical, and grounded in the provided data.
 ''';
 
   Future<String> _makeRawRequest(List<Map<String, String>> messages) async {
@@ -82,17 +95,31 @@ You MUST follow this exact sequence and ask only ONE thing at a time:
     }
 
     // Append language instruction
-    if (languageCode == 'id') {
-      systemPrompt += "\n\nIMPORTANT: You MUST reply in INDONESIAN language.";
-    } else {
-      systemPrompt += "\n\nIMPORTANT: You MUST reply in ENGLISH language.";
-    }
+    systemPrompt += _buildLanguageInstruction(languageCode);
 
     final List<Map<String, String>> fullMessages = [
       {'role': 'system', 'content': systemPrompt},
       ...messages,
     ];
     return _makeRawRequest(fullMessages);
+  }
+
+  Future<String> getCalculationAnalysis(
+    DecisionSession session, {
+    String? languageCode,
+  }) async {
+    String systemPrompt = calculationAnalysisSystemPrompt;
+    systemPrompt += _buildCurrentStatePrompt(session);
+    systemPrompt += _buildLanguageInstruction(languageCode);
+
+    final userPrompt = languageCode == 'id'
+        ? 'Jelaskan hasil perhitungan lokal ini. Gunakan hanya ranking yang diberikan.'
+        : 'Explain these local calculation results. Use only the provided ranking.';
+
+    return _makeRawRequest([
+      {'role': 'system', 'content': systemPrompt},
+      {'role': 'user', 'content': userPrompt},
+    ]);
   }
 
   /// This method asks the AI to extract structured data from the conversation
@@ -147,7 +174,7 @@ Rules:
 
   String _buildCurrentStatePrompt(DecisionSession session) {
     String prompt = "\n\nCURRENT LOADED DECISION DATA:\n";
-    prompt += "Title: ${session.title}\n";
+    prompt += "Title: ${_displayTitle(session.title)}\n";
 
     if (session.criteria.isNotEmpty) {
       prompt += "Criteria:\n";
@@ -159,11 +186,16 @@ Rules:
     if (session.alternatives.isNotEmpty) {
       prompt += "Alternatives:\n";
       for (var a in session.alternatives) {
-        prompt += "- ${a.name} (Scores: ${a.scores})\n";
+        prompt +=
+            "- ${a.name} (Scores: ${_formatScoresWithCriterionNames(session, a.scores)})\n";
       }
     }
 
     if (session.results != null && session.results!.isNotEmpty) {
+      if (session.selectedMethod != null) {
+        prompt +=
+            "\nCURRENT SELECTED CALCULATION METHOD: ${session.selectedMethod!.name.toUpperCase()}\n";
+      }
       prompt += "\nFINAL CALCULATION RESULTS (Use these for your analysis):\n";
       for (var r in session.results!) {
         prompt +=
@@ -172,7 +204,39 @@ Rules:
     }
 
     prompt +=
-        "\nNote: ALWAYS prioritize the 'FINAL CALCULATION RESULTS' above for your analysis. Do not calculate manually. Explain the winners based on how their individual criteria scores (listed under Alternatives) align with the criterion weights.";
+        "\nNote: ALWAYS prioritize the 'FINAL CALCULATION RESULTS' above for your analysis. Do not calculate manually. If the user asks about a different method than the current selected method, do not pretend the current ranking belongs to that other method. Explain the winners based on how their individual criteria scores (listed under Alternatives) align with the criterion weights.";
     return prompt;
+  }
+
+  String _buildLanguageInstruction(String? languageCode) {
+    if (languageCode == 'id') {
+      return "\n\nIMPORTANT: You MUST reply in INDONESIAN language.";
+    }
+    return "\n\nIMPORTANT: You MUST reply in ENGLISH language.";
+  }
+
+  String _displayTitle(String title) {
+    final trimmed = title.trim();
+    return trimmed.isEmpty ? _missingTitleLabel : trimmed;
+  }
+
+  String _formatScoresWithCriterionNames(
+    DecisionSession session,
+    Map<String, double> scores,
+  ) {
+    if (scores.isEmpty) {
+      return '{}';
+    }
+
+    final criterionNames = {
+      for (final criterion in session.criteria) criterion.id: criterion.name,
+    };
+
+    final formattedEntries = scores.entries.map((entry) {
+      final criterionName = criterionNames[entry.key] ?? entry.key;
+      return '$criterionName: ${entry.value}';
+    }).toList()..sort();
+
+    return '{${formattedEntries.join(', ')}}';
   }
 }

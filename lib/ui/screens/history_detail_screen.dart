@@ -15,18 +15,19 @@ class HistoryDetailScreen extends ConsumerStatefulWidget {
   const HistoryDetailScreen({super.key, required this.session});
 
   @override
-  ConsumerState<HistoryDetailScreen> createState() => _HistoryDetailScreenState();
+  ConsumerState<HistoryDetailScreen> createState() =>
+      _HistoryDetailScreenState();
 }
 
 class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _showScrollToTop = false;
-  
+
   // Expansion states
   bool _isRankingsExpanded = false;
   bool _isCriteriaExpanded = false;
   bool _isAlternativesExpanded = false;
-  
+
   // Global keys for scroll targets
   final GlobalKey _criteriaKey = GlobalKey();
   final GlobalKey _alternativesKey = GlobalKey();
@@ -75,6 +76,9 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
     final session = widget.session;
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
+    final displayTitle = session.title.trim().isEmpty
+        ? l10n.translate('untitledDecision')
+        : session.title;
     final localeCode = ref.watch(localeProvider).languageCode;
     final dateFormat = DateFormat('EEEE, dd MMMM yyyy • HH:mm', localeCode);
 
@@ -147,7 +151,10 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
                 children: [
                   // Status badge
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: statusColor.withAlpha(30),
                       borderRadius: BorderRadius.circular(20),
@@ -171,7 +178,7 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
                   const SizedBox(height: 16),
                   // Title
                   Text(
-                    session.title,
+                    displayTitle,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: colorScheme.onPrimaryContainer,
@@ -256,7 +263,8 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
                 color: Colors.amber,
                 itemCount: session.results!.length,
                 isExpanded: _isRankingsExpanded,
-                onToggle: () => setState(() => _isRankingsExpanded = !_isRankingsExpanded),
+                onToggle: () =>
+                    setState(() => _isRankingsExpanded = !_isRankingsExpanded),
                 items: session.results!.asMap().entries.map((entry) {
                   final index = entry.key;
                   final result = entry.value;
@@ -279,8 +287,11 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
               color: colorScheme.tertiary,
               itemCount: session.criteria.length,
               isExpanded: _isCriteriaExpanded,
-              onToggle: () => setState(() => _isCriteriaExpanded = !_isCriteriaExpanded),
-              items: session.criteria.map((c) => _CriteriaCard(criterion: c)).toList(),
+              onToggle: () =>
+                  setState(() => _isCriteriaExpanded = !_isCriteriaExpanded),
+              items: session.criteria
+                  .map((c) => _CriteriaCard(criterion: c))
+                  .toList(),
             ),
 
             const SizedBox(height: 24),
@@ -293,8 +304,12 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
               color: colorScheme.secondary,
               itemCount: session.alternatives.length,
               isExpanded: _isAlternativesExpanded,
-              onToggle: () => setState(() => _isAlternativesExpanded = !_isAlternativesExpanded),
-              items: session.alternatives.map((a) => _AlternativeCard(alternative: a)).toList(),
+              onToggle: () => setState(
+                () => _isAlternativesExpanded = !_isAlternativesExpanded,
+              ),
+              items: session.alternatives
+                  .map((a) => _AlternativeCard(alternative: a))
+                  .toList(),
             ),
 
             const SizedBox(height: 32),
@@ -306,7 +321,9 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
               child: FilledButton.icon(
                 onPressed: () {
                   final languageCode = ref.read(localeProvider).languageCode;
-                  ref.read(chatProvider.notifier).startFromHistory(session, languageCode: languageCode);
+                  ref
+                      .read(chatProvider.notifier)
+                      .startFromHistory(session, languageCode: languageCode);
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(builder: (_) => const ChatScreen()),
@@ -316,7 +333,10 @@ class _HistoryDetailScreenState extends ConsumerState<HistoryDetailScreen> {
                 icon: const Icon(Icons.replay),
                 label: Text(
                   l10n.translate('useDataAgain'),
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 style: FilledButton.styleFrom(
                   shape: RoundedRectangleBorder(
@@ -342,7 +362,7 @@ class _ExpandableSection extends StatelessWidget {
   final bool isExpanded;
   final VoidCallback onToggle;
   final List<Widget> items;
-  
+
   static const int _collapsedLimit = 3;
 
   const _ExpandableSection({
@@ -360,7 +380,9 @@ class _ExpandableSection extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
     final showExpandButton = items.length > _collapsedLimit;
-    final displayItems = isExpanded ? items : items.take(_collapsedLimit).toList();
+    final displayItems = isExpanded
+        ? items
+        : items.take(_collapsedLimit).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -372,9 +394,9 @@ class _ExpandableSection extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 8),
             Container(
@@ -395,10 +417,10 @@ class _ExpandableSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        
+
         // Items
         ...displayItems,
-        
+
         // Expand/Collapse button
         if (showExpandButton)
           Padding(
@@ -407,13 +429,20 @@ class _ExpandableSection extends StatelessWidget {
               child: TextButton.icon(
                 onPressed: onToggle,
                 icon: Icon(
-                  isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  isExpanded
+                      ? Icons.keyboard_arrow_up
+                      : Icons.keyboard_arrow_down,
                   color: colorScheme.primary,
                 ),
                 label: Text(
-                  isExpanded 
+                  isExpanded
                       ? l10n.translate('showLess')
-                      : l10n.translate('showMore').replaceAll('{count}', '${items.length - _collapsedLimit}'),
+                      : l10n
+                            .translate('showMore')
+                            .replaceAll(
+                              '{count}',
+                              '${items.length - _collapsedLimit}',
+                            ),
                   style: TextStyle(color: colorScheme.primary),
                 ),
               ),
@@ -488,11 +517,11 @@ class _RankingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    
+
     // Medal colors based on rank
     Color? medalColor;
     IconData medalIcon = Icons.emoji_events;
-    
+
     if (rank == 1) {
       medalColor = const Color(0xFFFFD700); // Gold
     } else if (rank == 2) {
@@ -505,7 +534,7 @@ class _RankingCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isTop3 
+        color: isTop3
             ? medalColor?.withAlpha(20) ?? colorScheme.surfaceContainerHighest
             : colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
@@ -522,10 +551,7 @@ class _RankingCard extends StatelessWidget {
               height: 44,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [
-                    medalColor,
-                    medalColor.withAlpha(180),
-                  ],
+                  colors: [medalColor, medalColor.withAlpha(180)],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -538,11 +564,7 @@ class _RankingCard extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                medalIcon,
-                color: Colors.white,
-                size: 24,
-              ),
+              child: Icon(medalIcon, color: Colors.white, size: 24),
             )
           else
             Container(
@@ -659,7 +681,9 @@ class _CriteriaCard extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  isBenefit ? l10n.translate('benefitDescription') : l10n.translate('costDescription'),
+                  isBenefit
+                      ? l10n.translate('benefitDescription')
+                      : l10n.translate('costDescription'),
                   style: TextStyle(
                     fontSize: 12,
                     color: colorScheme.onSurfaceVariant,
@@ -725,10 +749,7 @@ class _AlternativeCard extends StatelessWidget {
           Expanded(
             child: Text(
               alternative.name,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
             ),
           ),
           if (alternative.scores.isNotEmpty)
@@ -739,7 +760,9 @@ class _AlternativeCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                l10n.translate('scoreCount').replaceAll('{count}', '${alternative.scores.length}'),
+                l10n
+                    .translate('scoreCount')
+                    .replaceAll('{count}', '${alternative.scores.length}'),
                 style: TextStyle(
                   fontSize: 11,
                   color: colorScheme.onSurfaceVariant,

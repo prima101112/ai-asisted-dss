@@ -11,7 +11,10 @@ class DecisionSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    
+    final displayTitle = session.title.trim().isEmpty
+        ? l10n.translate('untitledDecision')
+        : session.title;
+
     // Status styling - aligned with history detail screen
     Color statusColor;
     IconData statusIcon;
@@ -60,7 +63,10 @@ class DecisionSummaryCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: statusColor.withAlpha(25),
                   borderRadius: BorderRadius.circular(16),
@@ -88,7 +94,7 @@ class DecisionSummaryCard extends StatelessWidget {
           _buildInfoRow(
             context,
             l10n.translate('title'),
-            session.title,
+            displayTitle,
             isTitle: true,
           ),
           const SizedBox(height: 10),
@@ -108,9 +114,14 @@ class DecisionSummaryCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoRow(BuildContext context, String label, String value, {bool isTitle = false}) {
+  Widget _buildInfoRow(
+    BuildContext context,
+    String label,
+    String value, {
+    bool isTitle = false,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
-    
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

@@ -191,6 +191,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   Widget _buildHomeView(BuildContext context, ChatNotifier notifier) {
     final colorScheme = Theme.of(context).colorScheme;
     final user = ref.watch(currentUserProvider);
+    final isLoading = ref.watch(
+      chatProvider.select((state) => state.isLoading),
+    );
     final firstName = user?.displayName?.split(' ').first ?? 'User';
     final l10n = AppLocalizations.of(context);
 
@@ -225,48 +228,62 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
               _SuggestionChip(
                 emoji: '🎯',
                 label: l10n.translate('chooseBestOption'),
-                onTap: () => _sendSuggestion(
-                  notifier,
-                  'I want to compare several options and find the best one',
-                ),
+                onTap: isLoading
+                    ? null
+                    : () => _sendSuggestion(
+                        notifier,
+                        l10n.translate('chooseBestOptionPrompt'),
+                      ),
               ),
               _SuggestionChip(
                 emoji: '💼',
                 label: l10n.translate('jobCareer'),
-                onTap: () => _sendSuggestion(
-                  notifier,
-                  'I need help deciding between job opportunities',
-                ),
+                onTap: isLoading
+                    ? null
+                    : () => _sendSuggestion(
+                        notifier,
+                        l10n.translate('jobCareerPrompt'),
+                      ),
               ),
               _SuggestionChip(
                 emoji: '🛒',
                 label: l10n.translate('purchaseDecision'),
-                onTap: () => _sendSuggestion(
-                  notifier,
-                  'I want to compare products before making a purchase',
-                ),
+                onTap: isLoading
+                    ? null
+                    : () => _sendSuggestion(
+                        notifier,
+                        l10n.translate('purchaseDecisionPrompt'),
+                      ),
               ),
               _SuggestionChip(
                 emoji: '🏠',
                 label: l10n.translate('locationPlace'),
-                onTap: () => _sendSuggestion(
-                  notifier,
-                  'I need help choosing between different locations',
-                ),
+                onTap: isLoading
+                    ? null
+                    : () => _sendSuggestion(
+                        notifier,
+                        l10n.translate('locationPlacePrompt'),
+                      ),
               ),
               _SuggestionChip(
                 emoji: '📊',
                 label: l10n.translate('businessStrategy'),
-                onTap: () => _sendSuggestion(
-                  notifier,
-                  'I want to evaluate business strategies or investments',
-                ),
+                onTap: isLoading
+                    ? null
+                    : () => _sendSuggestion(
+                        notifier,
+                        l10n.translate('businessStrategyPrompt'),
+                      ),
               ),
               _SuggestionChip(
                 emoji: '✨',
                 label: l10n.translate('somethingElse'),
-                onTap: () =>
-                    _sendSuggestion(notifier, 'I have a decision to make'),
+                onTap: isLoading
+                    ? null
+                    : () => _sendSuggestion(
+                        notifier,
+                        l10n.translate('somethingElsePrompt'),
+                      ),
               ),
             ],
           ),
@@ -298,6 +315,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
           final currentState = ref.watch(chatProvider);
           final notifier = ref.read(chatProvider.notifier);
           final l10n = AppLocalizations.of(context);
+          final languageCode = ref.watch(localeProvider).languageCode;
 
           // Auto-expand to full height when results are available
           final hasResults =
@@ -343,8 +361,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         currentState.session!.criteria.isNotEmpty) ...[
                       MethodSelector(
                         currentMethod: currentState.session!.selectedMethod,
+                        enabled: !currentState.isLoading,
                         onSelected: (method) {
-                          notifier.calculateRanking(method);
+                          notifier.calculateRanking(
+                            method,
+                            languageCode: languageCode,
+                          );
                         },
                       ),
                       const SizedBox(height: 24),
@@ -428,6 +450,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final l10n = AppLocalizations.of(context);
     final chatState = ref.watch(chatProvider);
     final isReady = chatState.session?.status == 'ready';
+    final isLoading = chatState.isLoading;
 
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -464,15 +487,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   children: [
                     _MethodChip(
                       label: 'SAW',
+                      enabled: !isLoading,
                       onTap: () {
                         final languageCode = ref
                             .read(localeProvider)
                             .languageCode;
-                        notifier.calculateRanking(DSSMethod.saw);
-                        notifier.sendMessage(
-                          languageCode == 'id'
-                              ? 'Analisis hasil perhitungan menggunakan metode SAW ini secara mendalam.'
-                              : 'Analyze these SAW calculation results in depth.',
+                        notifier.calculateRankingAndAnalyze(
+                          DSSMethod.saw,
                           languageCode: languageCode,
                         );
                         _scrollToBottom();
@@ -481,15 +502,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     const SizedBox(width: 8),
                     _MethodChip(
                       label: 'WP',
+                      enabled: !isLoading,
                       onTap: () {
                         final languageCode = ref
                             .read(localeProvider)
                             .languageCode;
-                        notifier.calculateRanking(DSSMethod.wp);
-                        notifier.sendMessage(
-                          languageCode == 'id'
-                              ? 'Analisis hasil perhitungan menggunakan metode WP ini secara mendalam.'
-                              : 'Analyze these WP calculation results in depth.',
+                        notifier.calculateRankingAndAnalyze(
+                          DSSMethod.wp,
                           languageCode: languageCode,
                         );
                         _scrollToBottom();
@@ -498,15 +517,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     const SizedBox(width: 8),
                     _MethodChip(
                       label: 'TOPSIS',
+                      enabled: !isLoading,
                       onTap: () {
                         final languageCode = ref
                             .read(localeProvider)
                             .languageCode;
-                        notifier.calculateRanking(DSSMethod.topsis);
-                        notifier.sendMessage(
-                          languageCode == 'id'
-                              ? 'Analisis hasil perhitungan menggunakan metode TOPSIS ini secara mendalam.'
-                              : 'Analyze these TOPSIS calculation results in depth.',
+                        notifier.calculateRankingAndAnalyze(
+                          DSSMethod.topsis,
                           languageCode: languageCode,
                         );
                         _scrollToBottom();
@@ -521,6 +538,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 Expanded(
                   child: TextField(
                     controller: _controller,
+                    enabled: !isLoading,
                     decoration: InputDecoration(
                       hintText: l10n.translate('typeMessage'),
                       border: OutlineInputBorder(
@@ -537,6 +555,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       ),
                     ),
                     onSubmitted: (val) {
+                      if (isLoading) return;
                       final languageCode = ref
                           .read(localeProvider)
                           .languageCode;
@@ -554,17 +573,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   ),
                   child: IconButton(
                     icon: const Icon(Icons.send, color: Colors.white),
-                    onPressed: () {
-                      final languageCode = ref
-                          .read(localeProvider)
-                          .languageCode;
-                      notifier.sendMessage(
-                        _controller.text,
-                        languageCode: languageCode,
-                      );
-                      _controller.clear();
-                      _scrollToBottom();
-                    },
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            final languageCode = ref
+                                .read(localeProvider)
+                                .languageCode;
+                            notifier.sendMessage(
+                              _controller.text,
+                              languageCode: languageCode,
+                            );
+                            _controller.clear();
+                            _scrollToBottom();
+                          },
                   ),
                 ),
               ],
@@ -579,14 +600,19 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 class _MethodChip extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
+  final bool enabled;
 
-  const _MethodChip({required this.label, required this.onTap});
+  const _MethodChip({
+    required this.label,
+    required this.onTap,
+    this.enabled = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ActionChip(
       label: Text(label),
-      onPressed: onTap,
+      onPressed: enabled ? onTap : null,
       backgroundColor: Theme.of(context).colorScheme.primaryContainer,
       labelStyle: TextStyle(
         color: Theme.of(context).colorScheme.onPrimaryContainer,
@@ -599,7 +625,7 @@ class _MethodChip extends StatelessWidget {
 class _SuggestionChip extends StatelessWidget {
   final String emoji;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _SuggestionChip({
     required this.emoji,

@@ -59,11 +59,20 @@ class AppLocalizations {
       'menu': 'Menu',
       'smartDss': 'Smart DSS',
       'chooseBestOption': 'Choose best option',
+      'chooseBestOptionPrompt':
+          'I want to compare several options and find the best one',
       'jobCareer': 'Job or career decision',
+      'jobCareerPrompt': 'I need help deciding between job opportunities',
       'purchaseDecision': 'Purchase decision',
+      'purchaseDecisionPrompt':
+          'I want to compare products before making a purchase',
       'locationPlace': 'Location or place',
+      'locationPlacePrompt': 'I need help choosing between different locations',
       'businessStrategy': 'Business strategy',
+      'businessStrategyPrompt':
+          'I want to evaluate business strategies or investments',
       'somethingElse': 'Something else',
+      'somethingElsePrompt': 'I have a decision to make',
       'benefit': 'Benefit (Higher is better)',
       'cost': 'Cost (Lower is better)',
 
@@ -99,6 +108,7 @@ class AppLocalizations {
       'deleteConfirmMsg':
           'Are you sure you want to delete this decision? This action cannot be undone.',
       'cancel': 'Cancel',
+      'untitledDecision': 'Untitled Decision',
     },
     'id': {
       'appTitle': 'Asisten Keputusan AI',
@@ -147,11 +157,22 @@ class AppLocalizations {
       'menu': 'Menu',
       'smartDss': 'Smart DSS',
       'chooseBestOption': 'Pilih opsi terbaik',
+      'chooseBestOptionPrompt':
+          'Saya ingin membandingkan beberapa opsi dan menemukan yang terbaik',
       'jobCareer': 'Keputusan pekerjaan/karir',
+      'jobCareerPrompt':
+          'Saya butuh bantuan untuk memutuskan di antara beberapa peluang kerja',
       'purchaseDecision': 'Keputusan pembelian',
+      'purchaseDecisionPrompt':
+          'Saya ingin membandingkan beberapa produk sebelum membeli',
       'locationPlace': 'Lokasi atau tempat',
+      'locationPlacePrompt':
+          'Saya butuh bantuan memilih di antara beberapa lokasi',
       'businessStrategy': 'Strategi bisnis',
+      'businessStrategyPrompt':
+          'Saya ingin mengevaluasi strategi bisnis atau investasi',
       'somethingElse': 'Lainnya',
+      'somethingElsePrompt': 'Saya punya keputusan yang perlu dibuat',
       'benefit': 'Benefit (Lebih tinggi lebih baik)',
       'cost': 'Cost (Lebih rendah lebih baik)',
 
@@ -187,6 +208,7 @@ class AppLocalizations {
       'deleteConfirmMsg':
           'Apakah Anda yakin ingin menghapus keputusan ini? Tindakan ini tidak dapat dibatalkan.',
       'cancel': 'Batal',
+      'untitledDecision': 'Keputusan Tanpa Judul',
     },
   };
 
