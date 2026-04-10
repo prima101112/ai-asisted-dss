@@ -32,13 +32,11 @@ DecisionSession _$DecisionSessionFromJson(Map<String, dynamic> json) =>
       alternatives: (json['alternatives'] as List<dynamic>)
           .map((e) => Alternative.fromJson(e as Map<String, dynamic>))
           .toList(),
-      selectedMethod: $enumDecodeNullable(
-        _$DSSMethodEnumMap,
-        json['selectedMethod'],
-      ),
+      selectedMethod: dssMethodFromJson(json['selectedMethod']),
       results: (json['results'] as List<dynamic>?)
           ?.map((e) => RankingResult.fromJson(e as Map<String, dynamic>))
           .toList(),
+      calculationMatrices: json['calculationMatrices'] as Map<String, dynamic>?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       status: json['status'] as String? ?? 'gathering',
     );
@@ -49,8 +47,9 @@ Map<String, dynamic> _$DecisionSessionToJson(DecisionSession instance) =>
       'title': instance.title,
       'criteria': instance.criteria.map((e) => e.toJson()).toList(),
       'alternatives': instance.alternatives.map((e) => e.toJson()).toList(),
-      'selectedMethod': _$DSSMethodEnumMap[instance.selectedMethod],
+      'selectedMethod': dssMethodToJson(instance.selectedMethod),
       'results': instance.results?.map((e) => e.toJson()).toList(),
+      'calculationMatrices': instance.calculationMatrices,
       'createdAt': instance.createdAt.toIso8601String(),
       'status': instance.status,
     };

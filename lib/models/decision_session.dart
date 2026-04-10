@@ -15,6 +15,39 @@ enum DSSMethod {
   topsis,
 }
 
+DSSMethod? dssMethodFromJson(Object? value) {
+  if (value == null) return null;
+  if (value is DSSMethod) return value;
+
+  switch (value.toString().trim().toUpperCase()) {
+    case 'SAW':
+      return DSSMethod.saw;
+    case 'WP':
+      return DSSMethod.wp;
+    case 'AHP':
+      return DSSMethod.ahp;
+    case 'TOPSIS':
+      return DSSMethod.topsis;
+    default:
+      return null;
+  }
+}
+
+String? dssMethodToJson(DSSMethod? method) {
+  switch (method) {
+    case DSSMethod.saw:
+      return 'SAW';
+    case DSSMethod.wp:
+      return 'WP';
+    case DSSMethod.ahp:
+      return 'AHP';
+    case DSSMethod.topsis:
+      return 'TOPSIS';
+    case null:
+      return null;
+  }
+}
+
 @JsonSerializable()
 class RankingResult {
   final String alternativeId;
@@ -40,6 +73,7 @@ class DecisionSession {
   final String title;
   final List<Criterion> criteria;
   final List<Alternative> alternatives;
+  @JsonKey(fromJson: dssMethodFromJson, toJson: dssMethodToJson)
   final DSSMethod? selectedMethod;
   final List<RankingResult>? results;
   final Map<String, dynamic>? calculationMatrices;
