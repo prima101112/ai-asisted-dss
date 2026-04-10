@@ -4,14 +4,16 @@ import '../../l10n/app_localizations.dart';
 class MatrixTable extends StatefulWidget {
   final String title;
   final Map<String, dynamic> data;
-  final List<String> criteriaNames;
+  final List<String> criterionIds;
+  final Map<String, String> criterionLabels;
   final Map<String, String> alternativeNames; // Map ID to Name
 
   const MatrixTable({
     super.key,
     required this.title,
     required this.data,
-    required this.criteriaNames,
+    required this.criterionIds,
+    required this.criterionLabels,
     required this.alternativeNames,
   });
 
@@ -41,12 +43,14 @@ class _MatrixTableState extends State<MatrixTable> {
   Widget _build2DTable(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final l10n = AppLocalizations.of(context);
-    
+
     final entries = widget.data.entries.toList();
+    final columnIds = _resolveColumnIds(entries);
+    final rowHeaderLabel = _resolveRowHeaderLabel(entries, columnIds);
     final itemCount = entries.length;
     final showExpandButton = itemCount > _initialItemCount;
-    final displayedEntries = (_isExpanded || !showExpandButton) 
-        ? entries 
+    final displayedEntries = (_isExpanded || !showExpandButton)
+        ? entries
         : entries.take(_initialItemCount).toList();
 
     return Column(
@@ -65,7 +69,9 @@ class _MatrixTableState extends State<MatrixTable> {
         Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colorScheme.outlineVariant.withAlpha(100)),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withAlpha(100),
+            ),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -83,30 +89,27 @@ class _MatrixTableState extends State<MatrixTable> {
                   color: colorScheme.onSurfaceVariant,
                 ),
                 columns: [
-                  const DataColumn(
-                    label: Text('Alternative'),
-                  ),
-                  ...widget.criteriaNames.map(
-                    (c) => DataColumn(
-                      label: Text(c),
-                    ),
+                  DataColumn(label: Text(rowHeaderLabel)),
+                  ...columnIds.map(
+                    (columnId) =>
+                        DataColumn(label: Text(_labelForId(columnId))),
                   ),
                 ],
                 rows: displayedEntries.map((entry) {
-                  final altId = entry.key;
-                  final altName = widget.alternativeNames[altId] ?? altId;
+                  final rowId = entry.key;
+                  final rowLabel = _labelForId(rowId);
                   final values = entry.value as Map<String, dynamic>;
 
                   return DataRow(
                     cells: [
                       DataCell(
                         Text(
-                          altName,
+                          rowLabel,
                           style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
                       ),
-                      ...widget.criteriaNames.map((cId) {
-                        final val = values[cId];
+                      ...columnIds.map((columnId) {
+                        final val = values[columnId];
                         return DataCell(
                           Text(
                             val is double
@@ -132,19 +135,64 @@ class _MatrixTableState extends State<MatrixTable> {
                 });
               },
               icon: Icon(
-                _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                _isExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
                 size: 20,
               ),
               label: Text(
-                _isExpanded 
-                  ? l10n.translate('showLess')
-                  : l10n.translate('showMore').replaceAll('{count}', '${itemCount - _initialItemCount}'),
+                _isExpanded
+                    ? l10n.translate('showLess')
+                    : l10n
+                          .translate('showMore')
+                          .replaceAll(
+                            '{count}',
+                            '${itemCount - _initialItemCount}',
+                          ),
               ),
             ),
           ),
         const SizedBox(height: 16),
       ],
     );
+  }
+
+  List<String> _resolveColumnIds(List<MapEntry<String, dynamic>> entries) {
+    final firstRow = entries.first.value;
+    if (firstRow is! Map<String, dynamic>) {
+      return widget.criterionIds;
+    }
+
+    final rowColumnIds = firstRow.keys.toList();
+    final preferredIds = widget.criterionIds;
+    final matchesPreferredIds =
+        preferredIds.isNotEmpty &&
+        preferredIds.every((criterionId) => rowColumnIds.contains(criterionId));
+
+    return matchesPreferredIds ? preferredIds : rowColumnIds;
+  }
+
+  String _resolveRowHeaderLabel(
+    List<MapEntry<String, dynamic>> entries,
+    List<String> columnIds,
+  ) {
+    final rowIds = entries.map((entry) => entry.key).toList();
+    final allRowsAreAlternatives = rowIds.every(
+      widget.alternativeNames.containsKey,
+    );
+    final allColumnsAreAlternatives = columnIds.every(
+      widget.alternativeNames.containsKey,
+    );
+
+    if (allRowsAreAlternatives && allColumnsAreAlternatives) {
+      return 'Alternative';
+    }
+
+    return 'Item';
+  }
+
+  String _labelForId(String id) {
+    return widget.criterionLabels[id] ?? widget.alternativeNames[id] ?? id;
   }
 
   Widget _build1DTable(BuildContext context) {
@@ -154,8 +202,8 @@ class _MatrixTableState extends State<MatrixTable> {
     final entries = widget.data.entries.toList();
     final itemCount = entries.length;
     final showExpandButton = itemCount > _initialItemCount;
-    final displayedEntries = (_isExpanded || !showExpandButton) 
-        ? entries 
+    final displayedEntries = (_isExpanded || !showExpandButton)
+        ? entries
         : entries.take(_initialItemCount).toList();
 
     return Column(
@@ -175,7 +223,9 @@ class _MatrixTableState extends State<MatrixTable> {
           width: double.infinity,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colorScheme.outlineVariant.withAlpha(100)),
+            border: Border.all(
+              color: colorScheme.outlineVariant.withAlpha(100),
+            ),
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
@@ -190,12 +240,8 @@ class _MatrixTableState extends State<MatrixTable> {
                 color: colorScheme.onSurfaceVariant,
               ),
               columns: const [
-                DataColumn(
-                  label: Text('Item'),
-                ),
-                DataColumn(
-                  label: Text('Value'),
-                ),
+                DataColumn(label: Text('Item')),
+                DataColumn(label: Text('Value')),
               ],
               rows: displayedEntries.map((entry) {
                 return DataRow(
@@ -224,13 +270,20 @@ class _MatrixTableState extends State<MatrixTable> {
                 });
               },
               icon: Icon(
-                _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                _isExpanded
+                    ? Icons.keyboard_arrow_up
+                    : Icons.keyboard_arrow_down,
                 size: 20,
               ),
               label: Text(
-                _isExpanded 
-                  ? l10n.translate('showLess')
-                  : l10n.translate('showMore').replaceAll('{count}', '${itemCount - _initialItemCount}'),
+                _isExpanded
+                    ? l10n.translate('showLess')
+                    : l10n
+                          .translate('showMore')
+                          .replaceAll(
+                            '{count}',
+                            '${itemCount - _initialItemCount}',
+                          ),
               ),
             ),
           ),

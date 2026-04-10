@@ -398,9 +398,14 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                               return MatrixTable(
                                 title: entry.key,
                                 data: entry.value,
-                                criteriaNames: currentState.session!.criteria
-                                    .map((c) => c.name)
+                                criterionIds: currentState.session!.criteria
+                                    .map((c) => c.id)
                                     .toList(),
+                                criterionLabels: {
+                                  for (var criterion
+                                      in currentState.session!.criteria)
+                                    criterion.id: criterion.name,
+                                },
                                 alternativeNames: {
                                   for (var alt
                                       in currentState.session!.alternatives)
