@@ -6,7 +6,8 @@ import 'package:uuid/uuid.dart';
 import '../models/decision_session.dart';
 import '../models/criterion.dart';
 import '../models/alternative.dart';
-import '../services/deepseek_service.dart';
+import '../services/ai_provider.dart';
+import '../services/ai_provider_factory.dart';
 import '../services/firebase_service.dart';
 import '../logic/dss_engine.dart';
 import 'auth_provider.dart';
@@ -65,16 +66,17 @@ final firebaseServiceProvider = Provider<FirebaseService>((ref) {
 
 final chatProvider = StateNotifierProvider<ChatNotifier, ChatState>((ref) {
   final firebaseService = ref.watch(firebaseServiceProvider);
-  return ChatNotifier(DeepSeekService(), firebaseService);
+  final aiProvider = AIProviderFactory.createProvider();
+  return ChatNotifier(aiProvider, firebaseService);
 });
 
 class ChatNotifier extends StateNotifier<ChatState> {
-  final DeepSeekService _aiService;
+  final AIProvider? _aiProvider;
   final FirebaseService _firebaseService;
   static const String _defaultDecisionTitle = '';
   int _latestExtractionToken = 0;
 
-  ChatNotifier(this._aiService, this._firebaseService)
+  ChatNotifier(this._aiProvider, this._firebaseService)
     : super(ChatState(messages: [], session: null)) {
     // Default to 'en' if not specified during init
     _initSession();
@@ -177,7 +179,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
           )
           .toList();
 
-      final aiResponse = await _aiService.getChatResponse(
+      final aiResponse = await _aiProvider!.getChatResponse(
         history,
         languageCode: languageCode,
         session: state.session,
@@ -239,7 +241,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
         )
         .toList();
 
-    final data = await _aiService.extractStructuredData(
+    final data = await _aiProvider!.extractStructuredData(
       history,
       session: activeSession,
     );
@@ -462,7 +464,7 @@ class ChatNotifier extends StateNotifier<ChatState> {
     state = state.copyWith(isLoading: true);
 
     try {
-      final aiResponse = await _aiService.getCalculationAnalysis(
+      final aiResponse = await _aiProvider!.getCalculationAnalysis(
         session,
         languageCode: languageCode,
       );
